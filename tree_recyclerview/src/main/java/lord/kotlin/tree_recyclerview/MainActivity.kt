@@ -24,15 +24,11 @@ class MainActivity : AppCompatActivity() {
     private val defaultList = ArrayList<TreeItem>().apply {
         add(
             TreeItem("Game")
-                .add(
-                    TreeItem("Steam")
+                .add(TreeItem("Steam")
                         .add(TreeItem("CHi"))
-                        .add(
-                            TreeItem("Sha")
+                        .add(TreeItem("Sha")
                                 .add(TreeItem("bbbb"))
-                                .add(TreeItem("cccc"))
-                        )
-                )
+                                .add(TreeItem("cccc"))))
                 .add(TreeItem("LOL"))
                 .add(TreeItem("Car"))
         )

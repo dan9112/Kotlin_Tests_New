@@ -1,5 +1,6 @@
 package lord.kotlin.tree_recyclerview
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -11,6 +12,7 @@ import lord.kotlin.tree_recyclerview.TreeListAdapter.TreeViewHolder
 import lord.kotlin.tree_recyclerview.databinding.ListItemBinding
 import java.util.*
 
+@SuppressLint("NotifyDataSetChanged")
 class TreeListAdapter(
     /** Контекст RecyclerView */
     private val context: Context,
@@ -52,9 +54,7 @@ class TreeListAdapter(
                         isOpen = !isOpen
                         // Обновляем список и снова добавляем данные
                         begin = true
-                        notifyItemChanged(position)
-                        if (isOpen) notifyItemRangeInserted(position + 1, sons!!.size)
-                        else notifyItemRangeRemoved(position + 1, sons!!.size)
+                        notifyDataSetChanged()
                     }
                 } else {
                     // Устанавливаем флаг для корневого узла
