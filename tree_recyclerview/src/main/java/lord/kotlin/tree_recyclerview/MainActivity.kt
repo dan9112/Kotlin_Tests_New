@@ -2,25 +2,27 @@ package lord.kotlin.tree_recyclerview
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 
-import androidx.recyclerview.widget.RecyclerView
+import lord.kotlin.tree_recyclerview.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var mRecyclerView: RecyclerView
 
-    private val mTreeItems: MutableList<TreeItem> = ArrayList()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        addList()
-        mRecyclerView = findViewById(R.id.id_listview)
-        mRecyclerView.adapter = TreeListAdapter(this, mTreeItems)
-        mRecyclerView.layoutManager = LinearLayoutManager(this)
+        DataBindingUtil.setContentView<ActivityMainBinding>(
+            this,
+            R.layout.activity_main
+        ).idListview.apply {
+            adapter = TreeListAdapter(this@MainActivity, defaultList)
+            layoutManager = LinearLayoutManager(this@MainActivity)
+        }
     }
 
-    private fun addList() {
-        mTreeItems.add(
+    /** Список элементов по умолчанию */
+    private val defaultList = ArrayList<TreeItem>().apply {
+        add(
             TreeItem("Game")
                 .add(
                     TreeItem("Steam")

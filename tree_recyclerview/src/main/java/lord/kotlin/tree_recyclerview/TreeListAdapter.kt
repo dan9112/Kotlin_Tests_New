@@ -2,12 +2,13 @@ package lord.kotlin.tree_recyclerview
 
 import android.content.Context
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.RecyclerView
 import lord.kotlin.tree_recyclerview.TreeListAdapter.TreeViewHolder
+import lord.kotlin.tree_recyclerview.databinding.ListItemBinding
 import java.util.*
 
 class TreeListAdapter(
@@ -24,7 +25,12 @@ class TreeListAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TreeViewHolder {
         return TreeViewHolder(
-            LayoutInflater.from(context).inflate(R.layout.list_item, parent, false)
+            DataBindingUtil.inflate(
+                LayoutInflater.from(context),
+                R.layout.list_item,
+                parent,
+                false
+            )
         )
     }
 
@@ -38,11 +44,9 @@ class TreeListAdapter(
                 // Если есть подклассы
                 if (sons != null) {
                     // Если дочерний элемент расширен
-                    if (isOpen) {
-                        iconView.setImageResource(R.drawable.tree_open)
-                    } else {
-                        iconView.setImageResource(R.drawable.tree_close)
-                    }
+                    iconView.setImageResource(
+                        if (isOpen) R.drawable.tree_open else R.drawable.tree_close
+                    )
                     // Добавляем событие щелчка к изображению списка с дочерними элементами, изменяем, расширять ли
                     itemView.setOnClickListener {
                         isOpen = !isOpen
@@ -85,9 +89,9 @@ class TreeListAdapter(
         }
     }
 
-    inner class TreeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var iconView: ImageView = itemView.findViewById(R.id.id_item_icon)
-        var textView: TextView = itemView.findViewById(R.id.id_item_text)
+    inner class TreeViewHolder(binding: ListItemBinding) : RecyclerView.ViewHolder(binding.root) {
+        val iconView: ImageView = binding.idItemIcon
+        val textView: TextView = binding.idItemText
     }
 
     init {
