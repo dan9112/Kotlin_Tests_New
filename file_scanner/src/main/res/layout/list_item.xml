@@ -7,8 +7,8 @@
 
         <ImageView
             android:id="@+id/id_item_icon"
-            android:layout_width="15dp"
-            android:layout_height="15dp"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
             android:layout_centerVertical="true"
             android:layout_marginLeft="5dp"
             android:layout_marginRight="5dp"
@@ -21,7 +21,7 @@
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:layout_toEndOf="@id/id_item_icon"
-            android:textSize="18sp" />
+            android:textSize="20sp" />
 
     </RelativeLayout>
 </layout>
