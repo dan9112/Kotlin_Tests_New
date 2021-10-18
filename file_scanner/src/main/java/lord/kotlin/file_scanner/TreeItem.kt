@@ -8,7 +8,7 @@ import java.util.*
  * родительским классом, когда он добавляется в родительский класс */
 class TreeItem(
     /** Сохраненные данные */
-    var string: String
+    var string: String?
 ) {
 
     /** Уровень пункта в дереве */

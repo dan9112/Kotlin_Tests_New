@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.RecyclerView
 import lord.kotlin.file_scanner.databinding.ListItemBinding
@@ -36,33 +37,8 @@ class TreeListAdapter(
     }
 
     override fun onBindViewHolder(holder: TreeViewHolder, position: Int) {
-        holder.apply {
-            // В методе getList все данные, которые необходимо отобразить, добавляются в itemList, поэтому вы можете отображать их по порядку в соответствии с порядком
-            itemList[position].apply {
-                // Устанавливаем отступ
-                itemView.setPadding(30 * level, 0, 0, 0)
-
-                // Если есть подклассы
-                if (sons != null) {
-                    // Если дочерний элемент расширен
-                    iconView.setImageResource(
-                        if (isOpen) R.drawable.tree_open else R.drawable.tree_close
-                    )
-                    // Добавляем событие щелчка к изображению списка с дочерними элементами, изменяем, расширять ли
-                    itemView.setOnClickListener {
-                        isOpen = !isOpen
-                        // Обновляем список и снова добавляем данные
-                        begin = true
-                        notifyDataSetChanged()
-                    }
-                } else {
-                    // Устанавливаем флаг для корневого узла
-                    iconView.setImageResource(R.drawable.ic_launcher_background)
-                }
-                //Добавить текст
-                textView.text = string
-            }
-        }
+        // В методе getList все данные, которые необходимо отобразить, добавляются в itemList, поэтому вы можете отображать их по порядку в соответствии с порядком
+        holder.setData(position)
     }
 
     // Поскольку этот метод вызывается первым каждый раз при обновлении списка, заполните список itemList в этом методе
@@ -89,8 +65,41 @@ class TreeListAdapter(
     }
 
     inner class TreeViewHolder(binding: ListItemBinding) : RecyclerView.ViewHolder(binding.root) {
-        val iconView: ImageView = binding.idItemIcon
-        val textView: TextView = binding.idItemText
+        private val iconView: ImageView = binding.idItemIcon
+        private val textView: TextView = binding.idItemText
+
+        fun setData(position: Int) {
+            itemList[position].apply {
+                // Устанавливаем отступ
+                itemView.setPadding(30 * level, 0, 0, 0)
+                textView.setTextColor(ContextCompat.getColor(context, android.R.color.black))
+                // Если есть подклассы
+                if (sons != null) {
+                    // Если дочерний элемент расширен
+                    iconView.setImageResource(
+                        if (isOpen) R.drawable.tree_open else R.drawable.tree_close
+                    )
+                    if (sons!![0].string == null) {// Директория, содержимое которой недоступно, либо она пуста
+                        itemView.setOnClickListener(null)
+                        textView.setTextColor(ContextCompat.getColor(context, android.R.color.holo_red_dark))
+                    } else {
+                        // Добавляем событие щелчка к изображению списка с дочерними элементами, изменяем, расширять ли
+                        itemView.setOnClickListener {
+                            isOpen = !isOpen
+                            // Обновляем список и снова добавляем данные
+                            begin = true
+                            notifyDataSetChanged()
+                        }
+                    }
+                } else {
+                    // Устанавливаем флаг для корневого узла
+                    iconView.setImageResource(R.drawable.ic_launcher_background)
+                    itemView.setOnClickListener(null)
+                }
+                //Добавить текст
+                textView.text = string
+            }
+        }
     }
 
     init {
