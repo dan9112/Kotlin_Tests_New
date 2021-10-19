@@ -1,6 +1,5 @@
 package lord.kotlin.file_scanner
 
-import android.content.Context
 import android.view.LayoutInflater
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -15,7 +14,7 @@ import lord.kotlin.file_scanner.main.MainActivity
 
 class TreeListAdapter(
     /** Контекст RecyclerView */
-    private val context: Context,
+    private val contextClass: MainActivity,
     /** Данные входящего списка */
     private val treeItems: ArrayList<TreeItem>
 ) : RecyclerView.Adapter<TreeListAdapter.TreeViewHolder>() {
@@ -26,7 +25,7 @@ class TreeListAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TreeViewHolder {
         return TreeViewHolder(
             DataBindingUtil.inflate(
-                LayoutInflater.from(context),
+                LayoutInflater.from(contextClass),
                 R.layout.list_item,
                 parent,
                 false
@@ -76,7 +75,19 @@ class TreeListAdapter(
             itemList[position].apply {
                 // Устанавливаем отступ
                 itemView.setPadding(30 * level, 0, 0, 0)
-                textView.setTextColor(ContextCompat.getColor(context, android.R.color.black))
+                itemView.setBackgroundColor(
+                    ContextCompat.getColor(
+                        contextClass,
+                        if (position % 2 == 1) {
+                            if (contextClass.isDarkModeOn) R.color.black_light
+                            else R.color.white_dark
+                        } else {
+                            if (contextClass.isDarkModeOn) android.R.color.black
+                            else R.color.white
+                        }
+                    )
+                )
+                textView.setTextColor(ContextCompat.getColor(contextClass, android.R.color.black))
                 // Если есть подклассы
                 if (sons != null) {
                     // Если дочерний элемент расширен
@@ -87,27 +98,26 @@ class TreeListAdapter(
                         itemView.setOnClickListener(null)
                         iconView.setColorFilter(
                             ContextCompat.getColor(
-                                context,
+                                contextClass,
                                 android.R.color.holo_red_dark
                             )
                         )
                         textView.setTextColor(
                             ContextCompat.getColor(
-                                context,
+                                contextClass,
                                 android.R.color.holo_red_dark
                             )
                         )
                     } else {
                         iconView.setColorFilter(
                             ContextCompat.getColor(
-                                context,
+                                contextClass,
                                 android.R.color.black
                             )
                         )
                         // Добавляем событие щелчка к изображению списка с дочерними элементами, изменяем, расширять ли
                         itemView.setOnClickListener {
-                            val activity = (context as MainActivity)
-                            activity.apply {
+                            contextClass.apply {
                                 progressBar.visibility = VISIBLE
                                 scanButton.isEnabled = false
                             }
@@ -118,7 +128,7 @@ class TreeListAdapter(
                             if (isOpen) notifyItemRangeInserted(position + 1, count)
                             else notifyItemRangeRemoved(position + 1, count)
                             notifyItemRangeChanged(position + 1, itemList.size - position)
-                            activity.apply {
+                            contextClass.apply {
                                 progressBar.visibility = GONE
                                 scanButton.isEnabled = true
                             }

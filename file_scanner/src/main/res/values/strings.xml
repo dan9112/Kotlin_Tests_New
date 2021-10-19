@@ -2,5 +2,5 @@
     <string name="app_name">File Scanner</string>
     <string name="list_item_content_description">Отображает картинку рядом с элементом</string>
     <string name="start_scan">Start Scan</string>
-    <string name="scan">Scan</string>
+    <string name="scan">Сканировать</string>
 </resources>

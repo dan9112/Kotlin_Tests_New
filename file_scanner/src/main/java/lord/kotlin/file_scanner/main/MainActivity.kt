@@ -3,6 +3,9 @@ package lord.kotlin.file_scanner.main
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.res.Configuration.UI_MODE_NIGHT_MASK
+import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES
@@ -17,6 +20,7 @@ import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -36,6 +40,9 @@ class MainActivity : AppCompatActivity() {
     internal lateinit var progressBar: ProgressBar
     internal lateinit var scanButton: Button
     private lateinit var viewModel: MainViewModel
+
+    internal val isDarkModeOn: Boolean
+        get() = (resources.configuration.uiMode and UI_MODE_NIGHT_MASK) == UI_MODE_NIGHT_YES
 
     val requestPermissionLauncher =
         registerForActivityResult(
@@ -72,7 +79,15 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
+        supportActionBar?.setBackgroundDrawable(
+            ColorDrawable(
+                ContextCompat.getColor(
+                    this,
+                    if (isDarkModeOn) R.color.black_light else R.color.white_dark
+                )
+            )
+        )
+        viewModel = ViewModelProvider(this)[MainViewModel::class.java]
 
         adapter = TreeListAdapter(this, viewModel.list)
         DataBindingUtil.setContentView<ActivityMainBinding>(
@@ -84,20 +99,22 @@ class MainActivity : AppCompatActivity() {
                 layoutManager = LinearLayoutManager(this@MainActivity)
             }
             this@MainActivity.progressBar = progressBar
-            scanButton = button.apply { setOnClickListener {
-                isEnabled = false
-                if (SDK_INT >= VERSION_CODES.R) {
-                    if (isExternalStorageManager()) scan()
-                    else startActivity(Intent(ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // (Опционально!) Открывает активность с настройками приложения как новое действие
-                    })
-                } else PermissionUtils.checkPermission(
-                    this@MainActivity,
-                    READ_EXTERNAL_STORAGE,
-                    permissionAskListener,
-                    "permissionFlag"
-                )
-            } }
+            scanButton = button.apply {
+                setOnClickListener {
+                    isEnabled = false
+                    if (SDK_INT >= VERSION_CODES.R) {
+                        if (isExternalStorageManager()) scan()
+                        else startActivity(Intent(ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // (Опционально!) Открывает активность с настройками приложения как новое действие
+                        })
+                    } else PermissionUtils.checkPermission(
+                        this@MainActivity,
+                        READ_EXTERNAL_STORAGE,
+                        permissionAskListener,
+                        "permissionFlag"
+                    )
+                }
+            }
         }
     }
 
