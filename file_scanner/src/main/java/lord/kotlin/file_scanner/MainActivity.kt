@@ -1,13 +1,15 @@
 package lord.kotlin.file_scanner
 
 import android.Manifest
+import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
+import android.os.Build.VERSION.SDK_INT
+import android.os.Build.VERSION_CODES
 import android.os.Bundle
-import android.os.Environment
-import android.provider.Settings
+import android.os.Environment.isExternalStorageManager
+import android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
 import android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
 import android.view.View
 import android.view.View.GONE
@@ -38,7 +40,7 @@ class MainActivity : AppCompatActivity() {
             ActivityResultContracts.RequestPermission()
         ) { isGranted: Boolean ->
             if (isGranted) scan()
-            scanButton.isEnabled =true
+            scanButton.isEnabled = true
         }
 
     private val permissionAskListener = object : PermissionUtils.PermissionAskListener {
@@ -47,18 +49,18 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onPermissionRequest() {
-            requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+            requestPermissionLauncher.launch(READ_EXTERNAL_STORAGE)
         }
 
         override fun onPermissionPreviouslyDenied() {
             Toast.makeText(this@MainActivity, "Так нужно, чувак!", Toast.LENGTH_SHORT).show()
-            requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+            requestPermissionLauncher.launch(READ_EXTERNAL_STORAGE)
         }
 
         override fun onPermissionDisabled() {
             Toast.makeText(this@MainActivity, "Включи разрешение сам, чувак!", Toast.LENGTH_SHORT)
                 .show()
-            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            startActivity(Intent(ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // (Опционально!) Открывает активность с настройками приложения как новое действие
                 data = Uri.fromParts("package", packageName, null)
             })
@@ -99,14 +101,14 @@ class MainActivity : AppCompatActivity() {
             files.add(item)
         }
         // Сортировка в алфавитном порядке
-        files.sortWith { lhs, rhs ->
-            if (lhs.string != null && rhs.string != null) {
-                if (lhs.string!! > rhs.string!!) 1 else if (lhs.string!! < rhs.string!!) -1 else 0
+        files.sortWith { previous, next ->
+            if (previous.string != null && next.string != null) {
+                if (previous.string!!.lowercase() > next.string!!.lowercase()) 1 else if (previous.string!!.lowercase() < next.string!!.lowercase()) -1 else 0
             } else 0
         }
         // Сортировка директории / файлы
-        files.sortWith { lhs, rhs ->
-            if (!lhs.sons.isNullOrEmpty() && rhs.sons.isNullOrEmpty()) -1 else if (lhs.sons.isNullOrEmpty() && !rhs.sons.isNullOrEmpty()) 1 else 0
+        files.sortWith { previous, next ->
+            if (!previous.sons.isNullOrEmpty() && next.sons.isNullOrEmpty()) -1 else if (previous.sons.isNullOrEmpty() && !next.sons.isNullOrEmpty()) 1 else 0
         }
         return files
     }
@@ -120,15 +122,23 @@ class MainActivity : AppCompatActivity() {
 
     fun onClick(view: View) {
         scanButton.isEnabled = false
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (Environment.isExternalStorageManager()) scan()
-            else startActivity(Intent(ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+        if (SDK_INT >= VERSION_CODES.R) {
+            if (isExternalStorageManager()) scan()
+            else startActivity(Intent(ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // (Опционально!) Открывает активность с настройками приложения как новое действие
+            })
         } else PermissionUtils.checkPermission(
             this,
-            Manifest.permission.READ_EXTERNAL_STORAGE,
+            READ_EXTERNAL_STORAGE,
             permissionAskListener,
             "permissionFlag"
         )
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (SDK_INT >= VERSION_CODES.R && isExternalStorageManager()) scanButton.isEnabled =
+            true
     }
 
     @SuppressLint("NotifyDataSetChanged")
