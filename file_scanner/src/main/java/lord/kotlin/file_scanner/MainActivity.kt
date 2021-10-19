@@ -1,6 +1,7 @@
 package lord.kotlin.file_scanner
 
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -19,6 +20,8 @@ import timber.log.Timber
 
 class MainActivity : AppCompatActivity() {
     private lateinit var adapter: TreeListAdapter
+
+    private val list = ArrayList<TreeItem>()
 
     val requestPermissionLauncher =
         registerForActivityResult(
@@ -42,7 +45,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onPermissionDisabled() {
-            Toast.makeText(this@MainActivity, "Включи разрешение сам, чувак!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this@MainActivity, "Включи разрешение сам, чувак!", Toast.LENGTH_SHORT)
+                .show()
             startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // (Опционально!) Открывает активность с настройками приложения как новое действие
                 data = Uri.fromParts("package", packageName, null)
@@ -53,26 +57,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        adapter = TreeListAdapter(this, ArrayList<TreeItem>().apply {
-            add(
-                TreeItem("Directory 1")
-                    .add(
-                        TreeItem("Directory 1.1")
-                            .add(TreeItem("File 1.1.1"))
-                            .add(TreeItem("File 1.1.2"))
-                    )
-                    .add(
-                        TreeItem("Directory 1.2")
-                            .add(TreeItem("File 1.2.1"))
-                    )
-                    .add(TreeItem("File 1.3"))
-            )
-            add(
-                TreeItem("Directory 2")
-                    .add(TreeItem("File 2.1"))
-            )
-            add(TreeItem("File 3"))
-        })
+        adapter = TreeListAdapter(this, list)
         DataBindingUtil.setContentView<ActivityMainBinding>(
             this,
             R.layout.activity_main
@@ -116,9 +101,11 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private fun scan() {
-        val list = scanFiles(File("/storage/emulated/0"))
+        list.clear()
+        list.addAll(scanFiles(File("/storage/emulated/0")))
         Timber.d("Весь список получен")
-        adapter.update(list)
+        adapter.notifyDataSetChanged()
     }
 }
