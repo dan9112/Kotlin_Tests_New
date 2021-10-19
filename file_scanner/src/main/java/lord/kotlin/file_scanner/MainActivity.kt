@@ -1,66 +1,30 @@
 package lord.kotlin.file_scanner
 
-import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.net.Uri
+import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
+import android.os.Environment
+import android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.widget.Button
 import android.widget.ProgressBar
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import lord.kotlin.file_scanner.databinding.ActivityMainBinding
-import java.io.File
-import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
-import lord.kotlin.file_scanner.check_permissions.PermissionUtils
 import timber.log.Timber
+import java.io.File
 
 
 class MainActivity : AppCompatActivity() {
     private lateinit var adapter: TreeListAdapter
-    private lateinit var progressBar: ProgressBar
-    private lateinit var scanButton: Button
+    internal lateinit var progressBar: ProgressBar
+    internal lateinit var scanButton: Button
 
     private val list = ArrayList<TreeItem>()
-
-    val requestPermissionLauncher =
-        registerForActivityResult(
-            RequestPermission()
-        ) { isGranted: Boolean ->
-            if (isGranted) scan()
-            scanButton.isEnabled =true
-        }
-
-    private val permissionAskListener = object : PermissionUtils.PermissionAskListener {
-        override fun onPermissionGranted() {
-            scan()
-        }
-
-        override fun onPermissionRequest() {
-            requestPermissionLauncher.launch(READ_EXTERNAL_STORAGE)
-        }
-
-        override fun onPermissionPreviouslyDenied() {
-            Toast.makeText(this@MainActivity, "Так нужно, чувак!", Toast.LENGTH_SHORT).show()
-            requestPermissionLauncher.launch(READ_EXTERNAL_STORAGE)
-        }
-
-        override fun onPermissionDisabled() {
-            Toast.makeText(this@MainActivity, "Включи разрешение сам, чувак!", Toast.LENGTH_SHORT)
-                .show()
-            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // (Опционально!) Открывает активность с настройками приложения как новое действие
-                data = Uri.fromParts("package", packageName, null)
-            })
-            scanButton.isEnabled = true
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,6 +53,8 @@ class MainActivity : AppCompatActivity() {
                 // некоторых директорий, что вызывает вылет без ошибок при попытке доступа:
                 // isDirectory и isFile работают корректно, но приложение не может получить
                 // содержимое
+                if (file.name == "MUSIC")
+                    Timber.i("Music Directory")
                 if (file.childrenAreAvailable) scanFiles(file).forEach { item.add(it) }
                 else item.add(TreeItem(null))
             }
@@ -106,23 +72,21 @@ class MainActivity : AppCompatActivity() {
 
     fun onClick(view: View) {
         scanButton.isEnabled = false
-        PermissionUtils.checkPermission(
-            this,
-            READ_EXTERNAL_STORAGE,
-            permissionAskListener,
-            "permissionFlag"
-        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (Environment.isExternalStorageManager()) scan()
+            else startActivity(Intent(ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+        } else scan()
     }
 
     @SuppressLint("NotifyDataSetChanged")
     private fun scan() {
         Thread {
-            runOnUiThread { progressBar.visibility = VISIBLE}
+            runOnUiThread { progressBar.visibility = VISIBLE }
             list.clear()
             list.addAll(scanFiles(File("/storage/emulated/0")))
             Timber.d("Весь список получен")
             runOnUiThread {
-            adapter.notifyDataSetChanged()
+                adapter.notifyDataSetChanged()
                 progressBar.visibility = GONE
                 scanButton.isEnabled = true
             }

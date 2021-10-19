@@ -2,6 +2,8 @@ package lord.kotlin.file_scanner
 
 import android.content.Context
 import android.view.LayoutInflater
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
@@ -80,7 +82,7 @@ class TreeListAdapter(
                     iconView.setImageResource(
                         if (isOpen) R.drawable.tree_open else R.drawable.tree_close
                     )
-                    if (sons!![0].string == null) {// Директория, содержимое которой недоступно, либо она пуста
+                    if (sons!!.size == 1 && sons!![0].string == null) {// Директория, содержимое которой недоступно, либо она пуста
                         itemView.setOnClickListener(null)
                         iconView.setColorFilter(
                             ContextCompat.getColor(
@@ -103,6 +105,11 @@ class TreeListAdapter(
                         )
                         // Добавляем событие щелчка к изображению списка с дочерними элементами, изменяем, расширять ли
                         itemView.setOnClickListener {
+                            val activity = (context as MainActivity)
+                            activity.apply {
+                                progressBar.visibility = VISIBLE
+                                scanButton.isEnabled = false
+                            }
                             isOpen = !isOpen
                             // Обновляем список и снова добавляем данные
                             notifyItemChanged(position)
@@ -110,6 +117,10 @@ class TreeListAdapter(
                             if (isOpen) notifyItemRangeInserted(position + 1, count)
                             else notifyItemRangeRemoved(position + 1, count)
                             notifyItemRangeChanged(position + 1, itemList.size - position)
+                            activity.apply {
+                                progressBar.visibility = GONE
+                                scanButton.isEnabled = true
+                            }
                         }
                     }
                 } else {
