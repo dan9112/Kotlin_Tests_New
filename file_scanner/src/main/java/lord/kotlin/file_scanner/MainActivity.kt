@@ -1,6 +1,5 @@
 package lord.kotlin.file_scanner
 
-import android.Manifest
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -21,6 +20,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.LinearLayoutManager
+import kotlinx.coroutines.*
 import lord.kotlin.file_scanner.databinding.ActivityMainBinding
 import timber.log.Timber
 import java.io.File
@@ -143,16 +143,16 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("NotifyDataSetChanged")
     private fun scan() {
-        Thread {
-            runOnUiThread { progressBar.visibility = VISIBLE }
+        CoroutineScope(Dispatchers.Default).launch {
+            withContext(Dispatchers.Main) { progressBar.visibility = VISIBLE }
             list.clear()
             list.addAll(scanFiles(File("/storage/emulated/0")))
             Timber.d("Весь список получен")
-            runOnUiThread {
+            withContext(Dispatchers.Main) {
                 adapter.notifyDataSetChanged()
                 progressBar.visibility = GONE
                 scanButton.isEnabled = true
             }
-        }.start()
+        }
     }
 }
