@@ -22,6 +22,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import lord.kotlin.file_scanner.databinding.ActivityMainBinding
 import timber.log.Timber
 import java.io.File
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 class MainActivity : AppCompatActivity() {
@@ -91,12 +93,20 @@ class MainActivity : AppCompatActivity() {
                 // некоторых директорий, что вызывает вылет без ошибок при попытке доступа:
                 // isDirectory и isFile работают корректно, но приложение не может получить
                 // содержимое
-                if (file.name == "MUSIC")
-                    Timber.i("Music Directory")
                 if (file.childrenAreAvailable) scanFiles(file).forEach { item.add(it) }
                 else item.add(TreeItem(null))
             }
             files.add(item)
+        }
+        // Сортировка в алфавитном порядке
+        files.sortWith { lhs, rhs ->
+            if (lhs.string != null && rhs.string != null) {
+                if (lhs.string!! > rhs.string!!) 1 else if (lhs.string!! < rhs.string!!) -1 else 0
+            } else 0
+        }
+        // Сортировка директории / файлы
+        files.sortWith { lhs, rhs ->
+            if (!lhs.sons.isNullOrEmpty() && rhs.sons.isNullOrEmpty()) -1 else if (lhs.sons.isNullOrEmpty() && !rhs.sons.isNullOrEmpty()) 1 else 0
         }
         return files
     }
