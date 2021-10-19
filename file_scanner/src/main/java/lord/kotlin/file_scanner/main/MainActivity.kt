@@ -1,4 +1,4 @@
-package lord.kotlin.file_scanner
+package lord.kotlin.file_scanner.main
 
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.annotation.SuppressLint
@@ -10,7 +10,6 @@ import android.os.Bundle
 import android.os.Environment.isExternalStorageManager
 import android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
 import android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
-import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.widget.Button
@@ -19,21 +18,24 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.*
+import lord.kotlin.file_scanner.PermissionUtils
+import lord.kotlin.file_scanner.R
+import lord.kotlin.file_scanner.TreeItem
+import lord.kotlin.file_scanner.TreeListAdapter
 import lord.kotlin.file_scanner.databinding.ActivityMainBinding
 import timber.log.Timber
 import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
 
-
 class MainActivity : AppCompatActivity() {
     private lateinit var adapter: TreeListAdapter
     internal lateinit var progressBar: ProgressBar
     internal lateinit var scanButton: Button
-
-    private val list = ArrayList<TreeItem>()
+    private lateinit var viewModel: MainViewModel
 
     val requestPermissionLauncher =
         registerForActivityResult(
@@ -70,8 +72,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
 
-        adapter = TreeListAdapter(this, list)
+        adapter = TreeListAdapter(this, viewModel.list)
         DataBindingUtil.setContentView<ActivityMainBinding>(
             this,
             R.layout.activity_main
@@ -81,7 +84,20 @@ class MainActivity : AppCompatActivity() {
                 layoutManager = LinearLayoutManager(this@MainActivity)
             }
             this@MainActivity.progressBar = progressBar
-            scanButton = button
+            scanButton = button.apply { setOnClickListener {
+                isEnabled = false
+                if (SDK_INT >= VERSION_CODES.R) {
+                    if (isExternalStorageManager()) scan()
+                    else startActivity(Intent(ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // (Опционально!) Открывает активность с настройками приложения как новое действие
+                    })
+                } else PermissionUtils.checkPermission(
+                    this@MainActivity,
+                    READ_EXTERNAL_STORAGE,
+                    permissionAskListener,
+                    "permissionFlag"
+                )
+            } }
         }
     }
 
@@ -120,21 +136,6 @@ class MainActivity : AppCompatActivity() {
             return (sons != null && sons.isNotEmpty())
         }
 
-    fun onClick(view: View) {
-        scanButton.isEnabled = false
-        if (SDK_INT >= VERSION_CODES.R) {
-            if (isExternalStorageManager()) scan()
-            else startActivity(Intent(ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // (Опционально!) Открывает активность с настройками приложения как новое действие
-            })
-        } else PermissionUtils.checkPermission(
-            this,
-            READ_EXTERNAL_STORAGE,
-            permissionAskListener,
-            "permissionFlag"
-        )
-    }
-
     override fun onResume() {
         super.onResume()
         if (SDK_INT >= VERSION_CODES.R && isExternalStorageManager()) scanButton.isEnabled =
@@ -145,8 +146,7 @@ class MainActivity : AppCompatActivity() {
     private fun scan() {
         CoroutineScope(Dispatchers.Default).launch {
             withContext(Dispatchers.Main) { progressBar.visibility = VISIBLE }
-            list.clear()
-            list.addAll(scanFiles(File("/storage/emulated/0")))
+            viewModel.replaceList(scanFiles(File("/storage/emulated/0")))
             Timber.d("Весь список получен")
             withContext(Dispatchers.Main) {
                 adapter.notifyDataSetChanged()

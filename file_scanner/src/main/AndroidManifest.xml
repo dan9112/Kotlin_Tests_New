@@ -18,7 +18,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.KotlinTests">
         <activity
-            android:name=".MainActivity"
+            android:name=".main.MainActivity"
+            android:label="Файлы внутренней памяти:"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

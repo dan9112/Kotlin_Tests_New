@@ -11,6 +11,7 @@ import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.RecyclerView
 import lord.kotlin.file_scanner.databinding.ListItemBinding
+import lord.kotlin.file_scanner.main.MainActivity
 
 class TreeListAdapter(
     /** Контекст RecyclerView */
