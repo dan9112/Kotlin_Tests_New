@@ -146,7 +146,8 @@ class TreeListAdapter(
             "MP3", "M4A", "3GA", "AAC", "OGG", "OGA", "WAV", "WMA", "AMR", "AWB", "FLAC", "MID", "MIDI", "XMF", "MXMF", "IMY", "RTTTL", "RTX", "OTA" -> R.drawable.ic_music_64_without_background
             "GIF", "JPG", "PNG" -> R.drawable.ic_image_64_without_background// не нашёл список всех поддерживаемых планшетом расширений
             "MP4", "M4V", "3GP", "3G2", "WMV", "ASF", "AVI", "FLV", "MKV", "WEBM" -> R.drawable.ic_video_64_without_background
-            else -> R.drawable.ic_launcher_background
+            "APK" -> R.drawable.ic_apk_64
+            else -> R.drawable.ic_unknown_file_64
         }
     }
 }
