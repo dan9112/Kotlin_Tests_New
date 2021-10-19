@@ -7,6 +7,10 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
+import android.view.View.GONE
+import android.view.View.VISIBLE
+import android.widget.Button
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -20,6 +24,8 @@ import timber.log.Timber
 
 class MainActivity : AppCompatActivity() {
     private lateinit var adapter: TreeListAdapter
+    private lateinit var progressBar: ProgressBar
+    private lateinit var scanButton: Button
 
     private val list = ArrayList<TreeItem>()
 
@@ -28,6 +34,7 @@ class MainActivity : AppCompatActivity() {
             RequestPermission()
         ) { isGranted: Boolean ->
             if (isGranted) scan()
+            scanButton.isEnabled =true
         }
 
     private val permissionAskListener = object : PermissionUtils.PermissionAskListener {
@@ -51,6 +58,7 @@ class MainActivity : AppCompatActivity() {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // (Опционально!) Открывает активность с настройками приложения как новое действие
                 data = Uri.fromParts("package", packageName, null)
             })
+            scanButton.isEnabled = true
         }
     }
 
@@ -61,9 +69,13 @@ class MainActivity : AppCompatActivity() {
         DataBindingUtil.setContentView<ActivityMainBinding>(
             this,
             R.layout.activity_main
-        ).idListview.apply {
-            this.adapter = this@MainActivity.adapter
-            layoutManager = LinearLayoutManager(this@MainActivity)
+        ).apply {
+            idListview.apply {
+                this.adapter = this@MainActivity.adapter
+                layoutManager = LinearLayoutManager(this@MainActivity)
+            }
+            this@MainActivity.progressBar = progressBar
+            scanButton = button
         }
     }
 
@@ -93,6 +105,7 @@ class MainActivity : AppCompatActivity() {
         }
 
     fun onClick(view: View) {
+        scanButton.isEnabled = false
         PermissionUtils.checkPermission(
             this,
             READ_EXTERNAL_STORAGE,
@@ -103,9 +116,16 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("NotifyDataSetChanged")
     private fun scan() {
-        list.clear()
-        list.addAll(scanFiles(File("/storage/emulated/0")))
-        Timber.d("Весь список получен")
-        adapter.notifyDataSetChanged()
+        Thread {
+            runOnUiThread { progressBar.visibility = VISIBLE}
+            list.clear()
+            list.addAll(scanFiles(File("/storage/emulated/0")))
+            Timber.d("Весь список получен")
+            runOnUiThread {
+            adapter.notifyDataSetChanged()
+                progressBar.visibility = GONE
+                scanButton.isEnabled = true
+            }
+        }.start()
     }
 }
