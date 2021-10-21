@@ -25,6 +25,8 @@ import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers.Default
+import kotlinx.coroutines.Dispatchers.Main
 import lord.kotlin.file_scanner.PermissionUtils
 import lord.kotlin.file_scanner.R
 import lord.kotlin.file_scanner.TreeItem
@@ -160,11 +162,11 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("NotifyDataSetChanged")
     private fun scan() {
-        CoroutineScope(Dispatchers.Default).launch {
-            withContext(Dispatchers.Main) { progressBar.visibility = VISIBLE }
+        CoroutineScope(Default).launch {
+            withContext(Main) { progressBar.visibility = VISIBLE }
             viewModel.replaceList(scanFiles(File(rootDirectoryPath)))
             Timber.d("Весь список получен")
-            withContext(Dispatchers.Main) {
+            withContext(Main) {
                 adapter.notifyDataSetChanged()
                 progressBar.visibility = GONE
                 scanButton.isEnabled = true
