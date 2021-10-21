@@ -193,7 +193,10 @@ class TreeListAdapter(
                 "pdf" -> R.drawable.ic_pdf_64_without_background
                 "zip" -> R.drawable.ic_zip_64_without_background
                 "xml" -> R.drawable.ic_xml_64_without_background
-                "msword" -> R.drawable.ic_doc_64_without_background
+                "msword", "vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "vnd.openxmlformats-officedocument.wordprocessingml.template",
+                "vnd.ms-word.document.macroEnabled.12", "vnd.ms-word.template.macroEnabled.12" ->
+                    R.drawable.ic_doc_64_without_background
                 "x-rar-compressed" -> R.drawable.ic_rar_64_without_background
                 else -> R.drawable.ic_unknown_file_64
             }
