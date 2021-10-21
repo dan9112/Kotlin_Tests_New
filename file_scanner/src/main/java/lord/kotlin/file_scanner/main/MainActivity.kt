@@ -163,7 +163,7 @@ class MainActivity : AppCompatActivity() {
     private fun scan() {
         CoroutineScope(Dispatchers.Default).launch {
             withContext(Dispatchers.Main) { progressBar.visibility = VISIBLE }
-            viewModel.replaceList(scanFiles(File("/storage/emulated/0")))
+            viewModel.replaceList(scanFiles(File(getExternalFilesDir(null).toString())))
             Timber.d("Весь список получен")
             withContext(Dispatchers.Main) {
                 adapter.notifyDataSetChanged()

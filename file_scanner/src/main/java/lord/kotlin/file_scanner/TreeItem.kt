@@ -22,6 +22,8 @@ class TreeItem(
     /** Подпункты */
     private var _sons: MutableList<TreeItem>? = null
 
+    var parent: TreeItem? = null
+
     /** Коллекция подпунктов, если нет, то null */
     val sons: List<TreeItem>?
         get() = if (_sons == null || _sons!!.size == 0) null else _sons
@@ -32,6 +34,7 @@ class TreeItem(
         if (_sons == null) _sons = ArrayList()
         // Установите уровень подпункта в соответствии с вашим уровнем
         sons.setSonLevel(sons, level)
+        sons.parent = this
         // Добавляем дочерний элемент в ваш список
         _sons!!.add(sons)
         return this

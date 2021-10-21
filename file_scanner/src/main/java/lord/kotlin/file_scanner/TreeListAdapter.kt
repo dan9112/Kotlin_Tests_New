@@ -1,5 +1,7 @@
 package lord.kotlin.file_scanner
 
+import android.content.Intent
+import android.content.Intent.*
 import android.view.LayoutInflater
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -7,10 +9,13 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.RecyclerView
 import lord.kotlin.file_scanner.databinding.ListItemBinding
 import lord.kotlin.file_scanner.main.MainActivity
+import java.io.File
+
 
 class TreeListAdapter(
     /** Контекст RecyclerView */
@@ -137,16 +142,47 @@ class TreeListAdapter(
                 } else {
                     // Устанавливаем флаг для корневого узла
                     iconView.apply {
-                        setImageResource(getIconResource(string!!.substringAfterLast('.', "")))
+                        setImageResource(getIconResource(string!!.getExtension))
                         clearColorFilter()
                     }
-                    itemView.setOnClickListener(null)
+                    itemView.setOnClickListener {
+                        val iconRes = getIconResource(string!!.getExtension)
+                        val file = File("${contextClass.getExternalFilesDir(null)}/$path")
+                        if (iconRes != R.drawable.ic_unknown_file_64 && iconRes != R.drawable.ic_apk_64) {
+                            openFile(file)
+                        }
+                    }
                 }
                 //Добавить текст
                 textView.text = string
             }
         }
     }
+
+    fun openFile(file: File) {
+        // Get URI and MIME type of file
+        val uri = FileProvider.getUriForFile(contextClass, "${contextClass.application.packageName}.provider", file)
+        val mime = contextClass.contentResolver.getType(uri)!!
+
+        // Open file with user selected app
+        val intent = Intent(ACTION_VIEW, uri).apply {
+            addFlags(FLAG_GRANT_READ_URI_PERMISSION)
+            // addFlags(FLAG_ACTIVITY_NO_HISTORY)
+            // addFlags(FLAG_ACTIVITY_NEW_TASK)
+            // setDataAndType(uri, mime)
+        }
+        contextClass.startActivity(createChooser(intent, "open file"))
+    }
+
+    private val TreeItem.path: String
+        get() {
+            var path = ""
+            if (parent != null) path = "${parent!!.path}/${string}"
+            return path
+        }
+
+    private val String.getExtension: String
+        get() = substringAfterLast('.', "")
 
     init {
         itemList = java.util.ArrayList()
