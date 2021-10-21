@@ -41,6 +41,8 @@ class MainActivity : AppCompatActivity() {
     internal lateinit var scanButton: Button
     private lateinit var viewModel: MainViewModel
 
+    internal val path = "/storage/emulated/0"
+
     internal val isDarkModeOn: Boolean
         get() = (resources.configuration.uiMode and UI_MODE_NIGHT_MASK) == UI_MODE_NIGHT_YES
 
@@ -148,10 +150,7 @@ class MainActivity : AppCompatActivity() {
 
     /** Возвращает true, если у приложения есть доступ к содержимому директории */
     private val File.childrenAreAvailable: Boolean
-        get() {
-            val sons = this.listFiles()
-            return (sons != null && sons.isNotEmpty())
-        }
+        get() = !listFiles().isNullOrEmpty()
 
     override fun onResume() {
         super.onResume()
@@ -163,7 +162,7 @@ class MainActivity : AppCompatActivity() {
     private fun scan() {
         CoroutineScope(Dispatchers.Default).launch {
             withContext(Dispatchers.Main) { progressBar.visibility = VISIBLE }
-            viewModel.replaceList(scanFiles(File(getExternalFilesDir(null).toString())))
+            viewModel.replaceList(scanFiles(File(path)))
             Timber.d("Весь список получен")
             withContext(Dispatchers.Main) {
                 adapter.notifyDataSetChanged()

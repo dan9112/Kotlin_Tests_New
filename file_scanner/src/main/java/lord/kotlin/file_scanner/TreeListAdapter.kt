@@ -16,7 +16,6 @@ import lord.kotlin.file_scanner.databinding.ListItemBinding
 import lord.kotlin.file_scanner.main.MainActivity
 import java.io.File
 
-
 class TreeListAdapter(
     /** Контекст RecyclerView */
     private val contextClass: MainActivity,
@@ -147,9 +146,8 @@ class TreeListAdapter(
                     }
                     itemView.setOnClickListener {
                         val iconRes = getIconResource(string!!.getExtension)
-                        val file = File("${contextClass.getExternalFilesDir(null)}/$path")
                         if (iconRes != R.drawable.ic_unknown_file_64 && iconRes != R.drawable.ic_apk_64) {
-                            openFile(file)
+                            openFile(File("${contextClass.path}/$path"))
                         }
                     }
                 }
@@ -160,26 +158,25 @@ class TreeListAdapter(
     }
 
     fun openFile(file: File) {
-        // Get URI and MIME type of file
-        val uri = FileProvider.getUriForFile(contextClass, "${contextClass.application.packageName}.provider", file)
-        val mime = contextClass.contentResolver.getType(uri)!!
-
         // Open file with user selected app
-        val intent = Intent(ACTION_VIEW, uri).apply {
+        val intent = Intent(
+            ACTION_VIEW,
+            // Get URI of file
+            FileProvider.getUriForFile(
+                contextClass,
+                "${contextClass.application.packageName}.provider",
+                file
+            )
+        ).apply {
             addFlags(FLAG_GRANT_READ_URI_PERMISSION)
-            // addFlags(FLAG_ACTIVITY_NO_HISTORY)
-            // addFlags(FLAG_ACTIVITY_NEW_TASK)
-            // setDataAndType(uri, mime)
+            addFlags(FLAG_ACTIVITY_NO_HISTORY)
         }
-        contextClass.startActivity(createChooser(intent, "open file"))
+        contextClass.startActivity(createChooser(intent, "Open file"))
     }
 
     private val TreeItem.path: String
-        get() {
-            var path = ""
-            if (parent != null) path = "${parent!!.path}/${string}"
-            return path
-        }
+        get() = if (parent != null) "${parent!!.path}/${string}"
+        else string!!
 
     private val String.getExtension: String
         get() = substringAfterLast('.', "")
