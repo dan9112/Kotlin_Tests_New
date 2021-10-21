@@ -41,7 +41,7 @@ class MainActivity : AppCompatActivity() {
     internal lateinit var scanButton: Button
     private lateinit var viewModel: MainViewModel
 
-    internal val path = "/storage/emulated/0"
+    internal val rootDirectoryPath = "/storage/emulated/0"
 
     internal val isDarkModeOn: Boolean
         get() = (resources.configuration.uiMode and UI_MODE_NIGHT_MASK) == UI_MODE_NIGHT_YES
@@ -162,7 +162,7 @@ class MainActivity : AppCompatActivity() {
     private fun scan() {
         CoroutineScope(Dispatchers.Default).launch {
             withContext(Dispatchers.Main) { progressBar.visibility = VISIBLE }
-            viewModel.replaceList(scanFiles(File(path)))
+            viewModel.replaceList(scanFiles(File(rootDirectoryPath)))
             Timber.d("Весь список получен")
             withContext(Dispatchers.Main) {
                 adapter.notifyDataSetChanged()
