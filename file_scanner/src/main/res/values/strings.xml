@@ -3,4 +3,5 @@
     <string name="list_item_content_description">Отображает картинку рядом с элементом</string>
     <string name="start_scan">Start Scan</string>
     <string name="scan">Сканировать</string>
+    <string name="search_content_description">Изображение иконки поиска приложения</string>
 </resources>

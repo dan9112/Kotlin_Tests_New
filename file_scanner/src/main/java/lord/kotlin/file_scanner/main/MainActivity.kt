@@ -4,8 +4,6 @@ import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
-import android.content.res.Configuration.UI_MODE_NIGHT_MASK
-import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri.fromParts
 import android.os.Build.VERSION.SDK_INT
@@ -16,7 +14,7 @@ import android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
 import android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
 import android.view.View.GONE
 import android.view.View.VISIBLE
-import android.widget.Button
+import android.widget.ImageButton
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -43,17 +41,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var adapter: TreeListAdapter
 
     /** Кнопка запуска сканирования */
-    private lateinit var scanButton: Button
+    private lateinit var scanButton: ImageButton
 
     /** Визуальная модель класса */
     internal lateinit var viewModel: MainViewModel
 
     /** Путь к директории, в которой осуществляется сканирование */
     internal val rootDirectoryPath = "/storage/emulated/0"
-
-    /** Флаг активности ночного режима */
-    internal val isDarkModeOn: Boolean
-        get() = (resources.configuration.uiMode and UI_MODE_NIGHT_MASK) == UI_MODE_NIGHT_YES
 
     /** Средство запуска запроса разрешения */
     val requestPermissionLauncher =
@@ -101,14 +95,17 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        supportActionBar?.setBackgroundDrawable(
-            ColorDrawable(
-                ContextCompat.getColor(
-                    this,
-                    if (isDarkModeOn) R.color.black_light else R.color.white_dark
+        supportActionBar?.apply {
+            title = "$rootDirectoryPath:"
+            setBackgroundDrawable(
+                ColorDrawable(
+                    ContextCompat.getColor(
+                        this@MainActivity,
+                        R.color.background_secondary
+                    )
                 )
             )
-        )
+        }
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
 
         adapter = TreeListAdapter(this, viewModel.list)

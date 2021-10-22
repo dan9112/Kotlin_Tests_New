@@ -95,13 +95,8 @@ class TreeListAdapter(
                             setBackgroundColor(
                                 ContextCompat.getColor(
                                     contextClass,
-                                    if (position % 2 == 1) {
-                                        if (isDarkModeOn) R.color.black_light
-                                        else R.color.white_dark
-                                    } else {
-                                        if (isDarkModeOn) android.R.color.black
-                                        else R.color.white
-                                    }
+                                    if (position % 2 == 1) R.color.background_secondary
+                                    else R.color.background
                                 )
                             )
                         }
