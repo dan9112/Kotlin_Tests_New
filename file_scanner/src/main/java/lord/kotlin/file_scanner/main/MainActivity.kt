@@ -3,10 +3,11 @@ package lord.kotlin.file_scanner.main
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.res.Configuration.UI_MODE_NIGHT_MASK
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.graphics.drawable.ColorDrawable
-import android.net.Uri
+import android.net.Uri.fromParts
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES
 import android.os.Bundle
@@ -74,8 +75,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onPermissionPreviouslyDenied() {
-            Toast.makeText(this@MainActivity, "Так нужно, чувак!", Toast.LENGTH_SHORT)
-                .show()// Заменить на диалог-фрагмент
+            Toast.makeText(
+                this@MainActivity,
+                "Так нужно, чувак!",
+                Toast.LENGTH_SHORT
+            )// Заменить на диалог-фрагмент
+                .show()
             requestPermissionLauncher.launch(READ_EXTERNAL_STORAGE)
         }
 
@@ -87,8 +92,8 @@ class MainActivity : AppCompatActivity() {
             )// Заменить на диалог-фрагмент
                 .show()
             startActivity(Intent(ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // (Опционально!) Открывает активность с настройками приложения как новое действие
-                data = Uri.fromParts("package", packageName, null)
+                addFlags(FLAG_ACTIVITY_NEW_TASK) // (Опционально!) Открывает активность с настройками приложения как новое действие
+                data = fromParts("package", packageName, null)
             })
             scanButton.isEnabled = true
         }
@@ -136,7 +141,7 @@ class MainActivity : AppCompatActivity() {
                     if (SDK_INT >= VERSION_CODES.R) {
                         if (isExternalStorageManager()) scan()
                         else startActivity(Intent(ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // (Опционально!) Открывает активность с настройками приложения как новое действие
+                            addFlags(FLAG_ACTIVITY_NEW_TASK) // (Опционально!) Открывает активность с настройками приложения как новое действие
                         })
                     } else PermissionUtils.checkPermission(
                         this@MainActivity,
@@ -151,32 +156,30 @@ class MainActivity : AppCompatActivity() {
 
     /** Дерево файлов и директорий в файле (директории) */
     private val File.scanFiles: ArrayList<TreeItem>
-        get() {
-            val files = ArrayList<TreeItem>()
+        get() = ArrayList<TreeItem>().apply {
             for (file in listFiles()!!) {
-                val item = TreeItem(file.name)
-                Timber.d("item: " + item.string)
-                if (file.isDirectory) {
-                    // Костыли. Нужны из-за того, что в последних версиях нет доступа к содержимому
-                    // некоторых директорий, что вызывает вылет без ошибок при попытке доступа:
-                    // isDirectory и isFile работают корректно, но приложение не может получить
-                    // содержимое
-                    if (file.childrenAreAvailable) file.scanFiles.forEach { item.add(it) }
-                    else item.add(TreeItem(null))
+                file.apply {
+                    val item = TreeItem(name)
+                    Timber.d("item: " + item.string)
+                    if (isDirectory) {
+                        // Костыли. Нужны из-за того, что в последних версиях нет доступа к содержимому
+                        // некоторых директорий, что вызывает вылет без ошибок при попытке доступа:
+                        // isDirectory и isFile работают корректно, но приложение не может получить
+                        // содержимое
+                        if (childrenAreAvailable) scanFiles.forEach { item.add(it) }
+                        else item.add(TreeItem(null))
+                    }
+                    add(item)
                 }
-                files.add(item)
             }
-            // Сортировка в алфавитном порядке
-            files.sortWith { previous, next ->
+            sortWith { previous, next ->// Сортировка в алфавитном порядке
                 if (previous.string != null && next.string != null) {
                     if (previous.string!!.lowercase() > next.string!!.lowercase()) 1 else if (previous.string!!.lowercase() < next.string!!.lowercase()) -1 else 0
                 } else 0
             }
-            // Сортировка директории / файлы
-            files.sortWith { previous, next ->
+            sortWith { previous, next ->// Сортировка директории / файлы
                 if (!previous.sons.isNullOrEmpty() && next.sons.isNullOrEmpty()) -1 else if (previous.sons.isNullOrEmpty() && !next.sons.isNullOrEmpty()) 1 else 0
             }
-            return files
         }
 
     /** Возвращает true, если у приложения есть доступ к содержимому директории */
@@ -196,7 +199,7 @@ class MainActivity : AppCompatActivity() {
     private fun scan() {
         CoroutineScope(Default).launch {
             viewModel.apply {
-                withContext(Main) {processStarted() }
+                withContext(Main) { processStarted() }
                 replaceList(File(rootDirectoryPath).scanFiles)
                 withContext(Main) {
                     adapter.notifyDataSetChanged()

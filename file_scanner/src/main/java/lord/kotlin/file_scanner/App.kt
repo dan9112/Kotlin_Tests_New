@@ -1,15 +1,13 @@
-package lord.kotlin.file_scanner;
+package lord.kotlin.file_scanner
 
-import android.app.Application;
+import android.app.Application
+import timber.log.Timber
 
-import timber.log.Timber;
-
-public class App extends Application {
-    @Override
-    public void onCreate() {
-        super.onCreate();
+class App : Application() {
+    override fun onCreate() {
+        super.onCreate()
         if (BuildConfig.DEBUG) {
-            Timber.plant(new Timber.DebugTree());
+            Timber.plant(Timber.DebugTree())
         }
     }
 }
