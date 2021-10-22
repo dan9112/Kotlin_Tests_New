@@ -16,7 +16,6 @@ import android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.widget.Button
-import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -37,17 +36,25 @@ import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
 
+/** Главная активность приложения */
 class MainActivity : AppCompatActivity() {
+    /** Адаптер RecyclerView */
     private lateinit var adapter: TreeListAdapter
-    internal lateinit var progressBar: ProgressBar
-    internal lateinit var scanButton: Button
-    private lateinit var viewModel: MainViewModel
 
+    /** Кнопка запуска сканирования */
+    private lateinit var scanButton: Button
+
+    /** Визуальная модель класса */
+    internal lateinit var viewModel: MainViewModel
+
+    /** Путь к директории, в которой осуществляется сканирование */
     internal val rootDirectoryPath = "/storage/emulated/0"
 
+    /** Флаг активности ночного режима */
     internal val isDarkModeOn: Boolean
         get() = (resources.configuration.uiMode and UI_MODE_NIGHT_MASK) == UI_MODE_NIGHT_YES
 
+    /** Средство запуска запроса разрешения */
     val requestPermissionLauncher =
         registerForActivityResult(
             ActivityResultContracts.RequestPermission()
@@ -56,6 +63,7 @@ class MainActivity : AppCompatActivity() {
             scanButton.isEnabled = true
         }
 
+    /** Реализация интерфейса обработки результата проверки разрешения */
     private val permissionAskListener = object : PermissionUtils.PermissionAskListener {
         override fun onPermissionGranted() {
             scan()
@@ -66,12 +74,17 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onPermissionPreviouslyDenied() {
-            Toast.makeText(this@MainActivity, "Так нужно, чувак!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this@MainActivity, "Так нужно, чувак!", Toast.LENGTH_SHORT)
+                .show()// Заменить на диалог-фрагмент
             requestPermissionLauncher.launch(READ_EXTERNAL_STORAGE)
         }
 
         override fun onPermissionDisabled() {
-            Toast.makeText(this@MainActivity, "Включи разрешение сам, чувак!", Toast.LENGTH_SHORT)
+            Toast.makeText(
+                this@MainActivity,
+                "Включи разрешение сам, чувак!",
+                Toast.LENGTH_SHORT
+            )// Заменить на диалог-фрагмент
                 .show()
             startActivity(Intent(ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // (Опционально!) Открывает активность с настройками приложения как новое действие
@@ -98,11 +111,25 @@ class MainActivity : AppCompatActivity() {
             this,
             R.layout.activity_main
         ).apply {
+            viewModel.apply {
+                isInProcess.observe(this@MainActivity, { value ->
+                    when (value) {
+                        true -> {
+                            progressBar.visibility = VISIBLE
+                            scanButton.isEnabled = false
+                        }
+                        false -> {
+                            progressBar.visibility = GONE
+                            scanButton.isEnabled = true
+                        }
+                    }
+                })
+            }
+
             idListview.apply {
                 this.adapter = this@MainActivity.adapter
                 layoutManager = LinearLayoutManager(this@MainActivity)
             }
-            this@MainActivity.progressBar = progressBar
             scanButton = button.apply {
                 setOnClickListener {
                     isEnabled = false
@@ -122,33 +149,35 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun scanFiles(dir: File): ArrayList<TreeItem> {
-        val files = ArrayList<TreeItem>()
-        for (file in dir.listFiles()!!) {
-            val item = TreeItem(file.name)
-            Timber.d("item: " + item.string)
-            if (file.isDirectory) {
-                // Костыли. Нужны из-за того, что в последних версиях нет доступа к содержимому
-                // некоторых директорий, что вызывает вылет без ошибок при попытке доступа:
-                // isDirectory и isFile работают корректно, но приложение не может получить
-                // содержимое
-                if (file.childrenAreAvailable) scanFiles(file).forEach { item.add(it) }
-                else item.add(TreeItem(null))
+    /** Дерево файлов и директорий в файле (директории) */
+    private val File.scanFiles: ArrayList<TreeItem>
+        get() {
+            val files = ArrayList<TreeItem>()
+            for (file in listFiles()!!) {
+                val item = TreeItem(file.name)
+                Timber.d("item: " + item.string)
+                if (file.isDirectory) {
+                    // Костыли. Нужны из-за того, что в последних версиях нет доступа к содержимому
+                    // некоторых директорий, что вызывает вылет без ошибок при попытке доступа:
+                    // isDirectory и isFile работают корректно, но приложение не может получить
+                    // содержимое
+                    if (file.childrenAreAvailable) file.scanFiles.forEach { item.add(it) }
+                    else item.add(TreeItem(null))
+                }
+                files.add(item)
             }
-            files.add(item)
+            // Сортировка в алфавитном порядке
+            files.sortWith { previous, next ->
+                if (previous.string != null && next.string != null) {
+                    if (previous.string!!.lowercase() > next.string!!.lowercase()) 1 else if (previous.string!!.lowercase() < next.string!!.lowercase()) -1 else 0
+                } else 0
+            }
+            // Сортировка директории / файлы
+            files.sortWith { previous, next ->
+                if (!previous.sons.isNullOrEmpty() && next.sons.isNullOrEmpty()) -1 else if (previous.sons.isNullOrEmpty() && !next.sons.isNullOrEmpty()) 1 else 0
+            }
+            return files
         }
-        // Сортировка в алфавитном порядке
-        files.sortWith { previous, next ->
-            if (previous.string != null && next.string != null) {
-                if (previous.string!!.lowercase() > next.string!!.lowercase()) 1 else if (previous.string!!.lowercase() < next.string!!.lowercase()) -1 else 0
-            } else 0
-        }
-        // Сортировка директории / файлы
-        files.sortWith { previous, next ->
-            if (!previous.sons.isNullOrEmpty() && next.sons.isNullOrEmpty()) -1 else if (previous.sons.isNullOrEmpty() && !next.sons.isNullOrEmpty()) 1 else 0
-        }
-        return files
-    }
 
     /** Возвращает true, если у приложения есть доступ к содержимому директории */
     private val File.childrenAreAvailable: Boolean
@@ -160,16 +189,20 @@ class MainActivity : AppCompatActivity() {
             true
     }
 
+    /** Функция сканирования файлов в корневой директории устройства.
+     *
+     * Запускает сопрограмму, в которой происходит [получение дерева файлов и директорий][File.scanFiles] и замена им [списка, используемого адаптером][MainViewModel.list] */
     @SuppressLint("NotifyDataSetChanged")
     private fun scan() {
         CoroutineScope(Default).launch {
-            withContext(Main) { progressBar.visibility = VISIBLE }
-            viewModel.replaceList(scanFiles(File(rootDirectoryPath)))
-            Timber.d("Весь список получен")
-            withContext(Main) {
-                adapter.notifyDataSetChanged()
-                progressBar.visibility = GONE
-                scanButton.isEnabled = true
+            viewModel.apply {
+                withContext(Main) {processStarted() }
+                replaceList(File(rootDirectoryPath).scanFiles)
+                withContext(Main) {
+                    adapter.notifyDataSetChanged()
+                    Timber.d("Весь список получен")
+                    processStopped()
+                }
             }
         }
     }

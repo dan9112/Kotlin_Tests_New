@@ -4,8 +4,6 @@ import android.content.Intent
 import android.content.Intent.*
 import android.net.Uri
 import android.view.LayoutInflater
-import android.view.View.GONE
-import android.view.View.VISIBLE
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
@@ -83,7 +81,8 @@ class TreeListAdapter(
             return count
         }
 
-    inner class TreeViewHolder(private val binding: ListItemBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class TreeViewHolder(private val binding: ListItemBinding) :
+        RecyclerView.ViewHolder(binding.root) {
         /** Функция заполнения данными элемента [списка][itemList]
          * @param position позиция элемента */
         fun setData(position: Int) {
@@ -141,17 +140,20 @@ class TreeListAdapter(
                                 )
                                 // Добавляем событие щелчка к изображению списка с дочерними элементами, изменяем, расширять ли
                                 itemView.setOnClickListener {
-                                    progressBar.visibility = VISIBLE
-                                    scanButton.isEnabled = false
-                                    isOpen = !isOpen
-                                    // Обновляем список и снова добавляем данные
-                                    notifyItemChanged(position)
-                                    val count = sons!!.getCount
-                                    if (isOpen) notifyItemRangeInserted(position + 1, count)
-                                    else notifyItemRangeRemoved(position + 1, count)
-                                    notifyItemRangeChanged(position + 1, itemList.size - position)
-                                    progressBar.visibility = GONE
-                                    scanButton.isEnabled = true
+                                    viewModel.apply {
+                                        processStarted()
+                                        isOpen = !isOpen
+                                        // Обновляем список и снова добавляем данные
+                                        notifyItemChanged(position)
+                                        val count = sons!!.getCount
+                                        if (isOpen) notifyItemRangeInserted(position + 1, count)
+                                        else notifyItemRangeRemoved(position + 1, count)
+                                        notifyItemRangeChanged(
+                                            position + 1,
+                                            itemList.size - position
+                                        )
+                                        processStopped()
+                                    }
                                 }
                             }
                         } else {

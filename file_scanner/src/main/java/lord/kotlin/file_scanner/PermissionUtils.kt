@@ -34,7 +34,7 @@ object PermissionUtils {
     /** Функция проверки разрешения
      * @param activity              активность, которая запрашивает разрешение
      * @param permission            разрешение, которое необходимо в данной активности
-     * @param permissionAskListener [интерфейс][PermissionAskListener], в котором в виде функций отображены все возможные сценарии после проверки? (не знаю как лучше сформулировать)
+     * @param permissionAskListener реализация [интерфейса][PermissionAskListener], в котором в виде функций отображены все возможные сценарии после проверки? (не знаю как лучше сформулировать)
      * @param keyForStore           ключ, по которому будет храниться флаг первого запроса [разрешения][permission] */
     fun checkPermission(
         activity: Activity,
@@ -89,7 +89,7 @@ object PermissionUtils {
         }
     }
 
-    /** Интерфейс, содержащий 4 метода
+    /** Интерфейс обработки результата проверки разрешения
      * @see onPermissionGranted
      * @see onPermissionRequest
      * @see onPermissionPreviouslyDenied
