@@ -11,8 +11,8 @@ android {
         applicationId "lord.kotlin.file_scanner"
         minSdk 24
         targetSdk 31
-        versionCode 19
-        versionName "5.5"
+        versionCode 20
+        versionName "5.5.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -7,6 +7,7 @@ import lord.kotlin.file_scanner.TreeItem
 
 /** Визуальная модель [главной активности приложения][MainActivity] */
 class MainViewModel : ViewModel() {
+    var isDialogActive = false
 
     private var _list = ArrayList<TreeItem>()
 
@@ -20,7 +21,7 @@ class MainViewModel : ViewModel() {
         _list.addAll(newList)
     }
 
-    private var _isInProcess = MutableLiveData<Boolean>()
+    private var _isInProcess = MutableLiveData<Boolean>().apply { value = false }
 
     /** Флаг активности процесса*/
     val isInProcess: LiveData<Boolean>
@@ -33,10 +34,6 @@ class MainViewModel : ViewModel() {
 
     /** Функция изменения [флага][isInProcess] в состояние false */
     fun processStopped() {
-        _isInProcess.value = false
-    }
-
-    init {
         _isInProcess.value = false
     }
 }

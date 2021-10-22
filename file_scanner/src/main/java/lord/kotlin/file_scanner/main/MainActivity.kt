@@ -15,7 +15,6 @@ import android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.widget.ImageButton
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -25,18 +24,17 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.Default
 import kotlinx.coroutines.Dispatchers.Main
-import lord.kotlin.file_scanner.PermissionUtils
-import lord.kotlin.file_scanner.R
-import lord.kotlin.file_scanner.TreeItem
-import lord.kotlin.file_scanner.TreeListAdapter
+import lord.kotlin.file_scanner.*
 import lord.kotlin.file_scanner.databinding.ActivityMainBinding
 import timber.log.Timber
 import java.io.File
 import java.util.*
+import lord.kotlin.file_scanner.UserFeedbackDialogFragment.DialogModes.*
+import lord.kotlin.file_scanner.UserFeedbackDialogFragment.DialogModes
 import kotlin.collections.ArrayList
 
 /** Главная активность приложения */
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), UserFeedbackDialogFragment.OnAgreePermission {
     /** Адаптер RecyclerView */
     private lateinit var adapter: TreeListAdapter
 
@@ -69,27 +67,30 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onPermissionPreviouslyDenied() {
-            Toast.makeText(
-                this@MainActivity,
-                "Так нужно, чувак!",
-                Toast.LENGTH_SHORT
-            )// Заменить на диалог-фрагмент
-                .show()
-            requestPermissionLauncher.launch(READ_EXTERNAL_STORAGE)
+            if (!viewModel.isDialogActive) {
+                viewModel.isDialogActive = true
+                UserFeedbackDialogFragment().apply {
+                    arguments = Bundle().apply {
+                        putSerializable(
+                            this@MainActivity.getString(R.string.dialog_fragment_mode), Read
+                        )
+                    }
+                }.show(supportFragmentManager, getString(R.string.dialog_fragment_tag))
+            }
         }
 
         override fun onPermissionDisabled() {
-            Toast.makeText(
-                this@MainActivity,
-                "Включи разрешение сам, чувак!",
-                Toast.LENGTH_SHORT
-            )// Заменить на диалог-фрагмент
-                .show()
-            startActivity(Intent(ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                addFlags(FLAG_ACTIVITY_NEW_TASK) // (Опционально!) Открывает активность с настройками приложения как новое действие
-                data = fromParts("package", packageName, null)
-            })
-            scanButton.isEnabled = true
+            if (!viewModel.isDialogActive) {
+                viewModel.isDialogActive = true
+                UserFeedbackDialogFragment().apply {
+                    arguments = Bundle().apply {
+                        putSerializable(
+                            this@MainActivity.getString(R.string.dialog_fragment_mode),
+                            ReadToSettings
+                        )
+                    }
+                }.show(supportFragmentManager, getString(R.string.dialog_fragment_tag))
+            }
         }
     }
 
@@ -134,12 +135,24 @@ class MainActivity : AppCompatActivity() {
             }
             scanButton = button.apply {
                 setOnClickListener {
-                    isEnabled = false
                     if (SDK_INT >= VERSION_CODES.R) {
                         if (isExternalStorageManager()) scan()
-                        else startActivity(Intent(ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
-                            addFlags(FLAG_ACTIVITY_NEW_TASK) // (Опционально!) Открывает активность с настройками приложения как новое действие
-                        })
+                        else {
+                            if (!viewModel.isDialogActive) {
+                                viewModel.isDialogActive = true
+                                UserFeedbackDialogFragment().apply {
+                                    arguments = Bundle().apply {
+                                        putSerializable(
+                                            this@MainActivity.getString(R.string.dialog_fragment_mode),
+                                            Manage
+                                        )
+                                    }
+                                }.show(
+                                    supportFragmentManager,
+                                    getString(R.string.dialog_fragment_tag)
+                                )
+                            }
+                        }
                     } else PermissionUtils.checkPermission(
                         this@MainActivity,
                         READ_EXTERNAL_STORAGE,
@@ -183,12 +196,6 @@ class MainActivity : AppCompatActivity() {
     private val File.childrenAreAvailable: Boolean
         get() = !listFiles().isNullOrEmpty()
 
-    override fun onResume() {
-        super.onResume()
-        if (SDK_INT >= VERSION_CODES.R && isExternalStorageManager()) scanButton.isEnabled =
-            true
-    }
-
     /** Функция сканирования файлов в корневой директории устройства.
      *
      * Запускает сопрограмму, в которой происходит [получение дерева файлов и директорий][File.scanFiles] и замена им [списка, используемого адаптером][MainViewModel.list] */
@@ -203,6 +210,25 @@ class MainActivity : AppCompatActivity() {
                     Timber.d("Весь список получен")
                     processStopped()
                 }
+            }
+        }
+    }
+
+    override fun onAgreePermission(mode: DialogModes?) {
+        viewModel.isDialogActive = false
+        when (mode) {
+            Read -> requestPermissionLauncher.launch(READ_EXTERNAL_STORAGE)
+            ReadToSettings -> {
+                startActivity(Intent(ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    addFlags(FLAG_ACTIVITY_NEW_TASK) // (Опционально!) Открывает активность с настройками приложения как новое действие
+                    data = fromParts("package", packageName, null)
+                })
+                scanButton.isEnabled = true
+            }
+            Manage -> if (SDK_INT >= VERSION_CODES.R) {
+                startActivity(Intent(ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
+                    addFlags(FLAG_ACTIVITY_NEW_TASK) // (Опционально!) Открывает активность с настройками приложения как новое действие
+                })
             }
         }
     }

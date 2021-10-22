@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="black_light">#1E1E1E</color>
+    <color name="white_dark">#E1E1E1</color>
     <color name="background">#FFFFFFFF</color>
-    <color name="background_secondary">#E1E1E1</color>
+    <color name="background_secondary">@color/white_dark</color>
 </resources>

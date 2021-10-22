@@ -4,4 +4,12 @@
     <string name="start_scan">Start Scan</string>
     <string name="scan">Сканировать</string>
     <string name="search_content_description">Изображение иконки поиска приложения</string>
+    <string name="dialog_fragment_tag">AlertDialog</string>
+    <string name="dialog_fragment_mode">mode</string>
+    <string name="dialog_fragment_positive_button_text">Ок</string>
+    <string name="dialog_fragment_negative_button_text">Отмена</string>
+    <string name="dialog_fragment_title">Внимание</string>
+    <string name="dialog_fragment_message_read">Необходимо предоставить разрешение, чтобы у приложения был доступ к файлам!</string>
+    <string name="dialog_fragment_message_read_to_settings">Самостоятельно предоставьте разрешение в настройках</string>
+    <string name="dialog_fragment_message_manage">Предоставьте доступ ко всем файлам для приложения "FileScanner" для его дальнейшей работы</string>
 </resources>
