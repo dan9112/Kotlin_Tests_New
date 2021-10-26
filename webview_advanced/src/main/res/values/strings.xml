@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">WebView Advanced</string>
+
+    <string name="from_gallery">Галерея</string>
+    <string name="from_web">Веб</string>
+    <string name="from_resource">Ресурсы</string>
+</resources>
