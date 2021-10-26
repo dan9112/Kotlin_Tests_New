@@ -1,13 +1,15 @@
 package lord.kotlin.sensor_light
 
 import android.annotation.SuppressLint
+import android.graphics.Color.BLUE
+import android.graphics.Color.RED
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import lord.kotlin.sensor_light.databinding.ActivityMainBinding
 
@@ -39,10 +41,21 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     @SuppressLint("SetTextI18n")
     override fun onSensorChanged(event: SensorEvent?) {
         if (event != null) {
-            val lightLevel = event.values[0]
-
             if (event.sensor.type == Sensor.TYPE_LIGHT) {
-                binding.textView.text = "LIGHT: $lightLevel"
+                val lightLevel = event.values[0]
+                binding.textView.apply {
+                    text = "LIGHT: $lightLevel"
+                    textSize = lightLevel * 0.09f + 7.91f
+                    if (lightLevel < 50) {
+                        // Ночь
+                        rootView.setBackgroundColor(BLUE)
+                        setTextColor(RED)
+                    } else {
+                        // День
+                        rootView.setBackgroundColor(RED)
+                        setTextColor(BLUE)
+                    }
+                }
             }
         }
     }
