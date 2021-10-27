@@ -18,6 +18,8 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
     private var lightSensor: Sensor? = null
 
+    private var lowPassFilter = LowPassFilter(10f)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
@@ -27,22 +29,25 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     }
 
     override fun onStart() {
-        super.onStart()
         if (lightSensor != null) {
-            sensorManager.registerListener(this, lightSensor, SensorManager.SENSOR_DELAY_NORMAL)
+            sensorManager.registerListener(this, lightSensor, SensorManager.SENSOR_DELAY_UI)
         } else Log.i("MainActivity", "Датчик освещения недоступен")
+        super.onStart()
     }
 
     override fun onStop() {
-        super.onStop()
         sensorManager.unregisterListener(this)
+        super.onStop()
     }
 
     @SuppressLint("SetTextI18n")
     override fun onSensorChanged(event: SensorEvent?) {
         if (event != null) {
             if (event.sensor.type == Sensor.TYPE_LIGHT) {
-                val lightLevel = event.values[0]
+                var lightLevel = event.values[0]
+
+                lightLevel = lowPassFilter.submit(lightLevel)
+
                 binding.textView.apply {
                     text = "LIGHT: $lightLevel"
                     textSize = lightLevel * 0.09f + 7.91f
@@ -75,6 +80,22 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             sensorValue in 9000.0..15000.0 -> LightLevel.LIGHT_LVL_3
             sensorValue in 1000.0..9000.0 -> LightLevel.LIGHT_LVL_2
             else -> LightLevel.LIGHT_LVL_1
+        }
+    }
+
+    class LowPassFilter(private val smoothing: Float) {
+        private var filteredValue = 0f
+        private var firstTime = true
+
+        fun submit(newValue: Float): Float {
+            return if (firstTime) {
+                filteredValue = newValue
+                firstTime = false
+                filteredValue
+            } else {
+                filteredValue += (newValue - filteredValue) / smoothing
+                filteredValue
+            }
         }
     }
 }
