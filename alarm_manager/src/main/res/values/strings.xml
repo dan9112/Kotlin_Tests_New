@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">Alarm Manager</string>
-    <string name="start">Start</string>
-    <string name="cancel">Cancel</string>
+    <string name="set_time">Установить время</string>
+    <string name="cancel_alarm">Отмена сигнализации</string>
 </resources>

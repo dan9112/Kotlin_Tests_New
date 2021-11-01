@@ -9,10 +9,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.KotlinTests">
-        <service
-            android:name=".MyAlarmService"
-            android:enabled="true"
-            android:exported="false" />
+
+        <receiver
+            android:name=".AlarmReceiver"
+            android:process=":remote" />
 
         <activity
             android:name=".MainActivity"
