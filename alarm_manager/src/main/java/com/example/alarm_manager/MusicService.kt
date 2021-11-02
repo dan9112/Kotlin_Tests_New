@@ -24,7 +24,12 @@ class MusicService : Service() {
         previousId?.let { stopSelf(it) }
         previousId = startId
         if (intent.getBooleanExtra("Command", false)) {
-            player.start()
+            player.run {
+                start()
+                setOnCompletionListener {
+                    start()
+                }
+            }
             sendBroadcast(Intent(musicPlayerAction).run {
                 putExtra("PlayMusic", true)
             })
