@@ -73,14 +73,13 @@ class MainActivity : AppCompatActivity() {
                 .apply {
                     musicIsInProcess.observe(this@MainActivity, { value ->
                         when (value) {
-                            true -> {
-                                butttonShowDialog.apply {
+                            true -> butttonShowDialog.run {
                                     setOnClickListener {
                                         startService(
                                             Intent(
                                                 context,
                                                 MusicService::class.java
-                                            ).apply {
+                                            ).run {
                                                 putExtra("Command", false)
                                             })
                                         cancelAlarm()
@@ -88,9 +87,7 @@ class MainActivity : AppCompatActivity() {
                                     text = "Выключить сигнализацию"
                                     isEnabled = true
                                 }
-                            }
-                            false -> {
-                                butttonShowDialog.apply {
+                            false -> butttonShowDialog.run {
                                     setOnClickListener {
                                         textViewAlarmPrompt.text = ""
                                         openTimePickerDialog(true)
@@ -98,7 +95,6 @@ class MainActivity : AppCompatActivity() {
                                     text = "Установить сигнализацию"
                                     isEnabled = true
                                 }
-                            }
                             null -> musicIsInProcess.value = false
                         }
                     })
@@ -113,12 +109,12 @@ class MainActivity : AppCompatActivity() {
 
     // Вызываем диалоговое окно выбора времени
     private fun openTimePickerDialog(is24r: Boolean) {
-        getInstance().apply {
+        getInstance().run {
             TimePickerDialog(
                 this@MainActivity, onTimeSetListener,
                 this[HOUR_OF_DAY],
                 this[MINUTE], is24r
-            ).apply {
+            ).run {
                 setTitle("Выберите время")
                 show()
             }
@@ -138,7 +134,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun onPermissionPreviouslyDenied() {
-                    viewModel.apply {
+                    viewModel.run {
                         if (!dialogIsShowing) {
                             dialogIsShowing = !dialogIsShowing
                             PermissionDialogFragment().show(
@@ -165,7 +161,7 @@ class MainActivity : AppCompatActivity() {
     /** Установка будильника с точным временем срабатывания */
     @SuppressLint("SetTextI18n", "UnspecifiedImmutableFlag")
     private fun setAlarm() {
-        binding.apply {
+        binding.run {
             textViewAlarmPrompt.text = "Сигнализация установлена на ${targetCal.time}"
             butttonShowDialog.isEnabled = false
         }
@@ -188,7 +184,7 @@ class MainActivity : AppCompatActivity() {
     /** Установка будильника с неточным временем срабатывания */
     @SuppressLint("SetTextI18n", "UnspecifiedImmutableFlag")
     private fun setAlarm2() {
-        binding.apply {
+        binding.run {
             textViewAlarmPrompt.text = "Сигнализация установлена на ${targetCal.time}"
             butttonShowDialog.isEnabled = false
         }
@@ -222,8 +218,8 @@ class MainActivity : AppCompatActivity() {
         viewModel.musicIsInProcess.value = null
     }
 
-    val dialogPositiveChoice
-        get() = run {
+    val dialogPositiveChoice: Unit
+        get() {
             viewModel.dialogIsShowing = false
             setAlarm()
         }

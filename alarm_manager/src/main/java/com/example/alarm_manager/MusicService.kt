@@ -25,11 +25,11 @@ class MusicService : Service() {
         previousId = startId
         if (intent.getBooleanExtra("Command", false)) {
             player.start()
-            sendBroadcast(Intent(musicPlayerAction).apply {
+            sendBroadcast(Intent(musicPlayerAction).run {
                 putExtra("PlayMusic", true)
             })
         }
-        else player.apply {
+        else player.run {
             stop()
             try {
                 prepare()
@@ -37,7 +37,7 @@ class MusicService : Service() {
             } catch (t: Throwable) {
                 t.message?.let { Log.e("MusicService", it) }
             } finally {
-                sendBroadcast(Intent(musicPlayerAction).apply {
+                sendBroadcast(Intent(musicPlayerAction).run {
                     putExtra("PlayMusic", false)
                 })
             }
