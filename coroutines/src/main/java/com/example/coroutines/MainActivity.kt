@@ -4,10 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.databinding.DataBindingUtil
 import com.example.coroutines.databinding.ActivityMainBinding
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import timber.log.Timber
 
 class MainActivity : AppCompatActivity() {
@@ -21,8 +18,8 @@ class MainActivity : AppCompatActivity() {
                     runBlocking {
                         Timber.d("Начинаем погрузку котов")
                         joinAll(
-                            async { loadCatImage(1, 500) },
-                            async { loadCatImage(2, 300) }
+                            launch { loadCatImage(1, 500) },
+                            launch { loadCatImage(2, 300) }
                         )
                         Timber.d("Операция погрузки котов завершена")
                     }
