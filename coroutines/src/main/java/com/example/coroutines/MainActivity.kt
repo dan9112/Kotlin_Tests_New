@@ -7,6 +7,7 @@ import com.example.coroutines.databinding.ActivityMainBinding
 import kotlinx.coroutines.*
 import timber.log.Timber
 
+@DelicateCoroutinesApi
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
@@ -15,21 +16,18 @@ class MainActivity : AppCompatActivity() {
         binding = DataBindingUtil.setContentView<ActivityMainBinding>(this, R.layout.activity_main)
             .apply {
                 button.setOnClickListener {
-                    runBlocking {
-                        Timber.d("Начинаем погрузку котов")
-                        joinAll(
-                            launch { loadCatImage(1, 500) },
-                            launch { loadCatImage(2, 300) }
-                        )
-                        Timber.d("Операция погрузки котов завершена")
+                    Timber.d("Start")
+                    CoroutineScope(Dispatchers.Main).launch {
+                        delay(1000L)
+                        Timber.d("Kitty")
+                        Timber.d("Thread from launch: ${Thread.currentThread().name}")
                     }
+
+                    Timber.d("Hello")
+                    Thread.sleep(5000L)
+                    Timber.d("Stop")
+                    Timber.d("Thread from onCreate: ${Thread.currentThread().name}")
                 }
             }
-    }
-
-    private suspend fun loadCatImage(number: Int, delay: Long) {
-        Timber.d("Загружаем котика под номером $number")
-        delay(delay)
-        Timber.d("Котик под номером $number загружен")
     }
 }
