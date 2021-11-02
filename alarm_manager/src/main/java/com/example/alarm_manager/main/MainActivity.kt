@@ -75,13 +75,6 @@ class MainActivity : AppCompatActivity() {
                         when (value) {
                             true -> butttonShowDialog.run {
                                     setOnClickListener {
-                                        startService(
-                                            Intent(
-                                                context,
-                                                MusicService::class.java
-                                            ).run {
-                                                putExtra("Command", false)
-                                            })
                                         cancelAlarm()
                                     }
                                     text = "Выключить сигнализацию"
@@ -207,6 +200,15 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("UnspecifiedImmutableFlag")
     private fun cancelAlarm() {
         binding.textViewAlarmPrompt.text = "Сигнализация отменена!"
+
+        startService(
+            Intent(
+                applicationContext,
+                MusicService::class.java
+            ).run {
+                putExtra("Command", false)
+            })
+
         (getSystemService(ALARM_SERVICE) as AlarmManager).cancel(
             PendingIntent.getBroadcast(
                 applicationContext,
@@ -218,8 +220,8 @@ class MainActivity : AppCompatActivity() {
         viewModel.musicIsInProcess.value = null
     }
 
-    val dialogPositiveChoice: Unit
-        get() {
+    val dialogPositiveChoice
+        get() = run {
             viewModel.dialogIsShowing = false
             setAlarm()
         }
