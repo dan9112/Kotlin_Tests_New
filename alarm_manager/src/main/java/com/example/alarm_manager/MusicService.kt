@@ -5,7 +5,7 @@ import android.content.Intent
 import android.media.MediaPlayer
 import android.os.IBinder
 import android.util.Log
-import com.example.alarm_manager.MainActivity.Companion.musicPlayerAction
+import com.example.alarm_manager.main.MainActivity.Companion.musicPlayerAction
 
 class MusicService : Service() {
 

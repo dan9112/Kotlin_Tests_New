@@ -1,4 +1,4 @@
-package com.example.alarm_manager
+package com.example.alarm_manager.main
 
 import android.Manifest.permission.SCHEDULE_EXACT_ALARM
 import android.annotation.SuppressLint
@@ -17,6 +17,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
+import com.example.alarm_manager.*
 import com.example.alarm_manager.databinding.ActivityMainBinding
 import java.util.*
 import java.util.Calendar.*
@@ -28,6 +29,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     private lateinit var viewModel: MainViewModel
+
+    private lateinit var targetCal: Calendar
 
     private val broadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -56,7 +59,8 @@ class MainActivity : AppCompatActivity() {
                 // то переносим на завтра
                 calSet.add(DATE, 1)
             }
-            trySetAlarm(calSet)
+            targetCal = calSet
+            trySetAlarm()
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -121,12 +125,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun trySetAlarm(targetCal: Calendar) {
-        if (SDK_INT < VERSION_CODES.S) setAlarm(targetCal)
+    private fun trySetAlarm() {
+        if (SDK_INT < VERSION_CODES.S) setAlarm()
         else {
             val permissionAskListener = object : PermissionUtils.PermissionAskListener {
                 override fun onPermissionGranted() {
-                    setAlarm(targetCal)
+                    setAlarm()
                 }
 
                 override fun onPermissionRequest() {
@@ -134,11 +138,19 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun onPermissionPreviouslyDenied() {
-                    setAlarm2(targetCal)
+                    viewModel.apply {
+                        if (!dialogIsShowing) {
+                            dialogIsShowing = !dialogIsShowing
+                            PermissionDialogFragment().show(
+                                supportFragmentManager,
+                                "PermissionDialogFragment"
+                            )
+                        }
+                    }
                 }
 
                 override fun onPermissionDisabled() {
-                    setAlarm2(targetCal)
+                    setAlarm2()
                 }
             }
             PermissionUtils.checkPermission(
@@ -152,7 +164,7 @@ class MainActivity : AppCompatActivity() {
 
     /** Установка будильника с точным временем срабатывания */
     @SuppressLint("SetTextI18n", "UnspecifiedImmutableFlag")
-    private fun setAlarm(targetCal: Calendar) {
+    private fun setAlarm() {
         binding.apply {
             textViewAlarmPrompt.text = "Сигнализация установлена на ${targetCal.time}"
             butttonShowDialog.isEnabled = false
@@ -175,7 +187,7 @@ class MainActivity : AppCompatActivity() {
 
     /** Установка будильника с неточным временем срабатывания */
     @SuppressLint("SetTextI18n", "UnspecifiedImmutableFlag")
-    private fun setAlarm2(targetCal: Calendar) {
+    private fun setAlarm2() {
         binding.apply {
             textViewAlarmPrompt.text = "Сигнализация установлена на ${targetCal.time}"
             butttonShowDialog.isEnabled = false
@@ -209,6 +221,18 @@ class MainActivity : AppCompatActivity() {
         )
         viewModel.musicIsInProcess.value = null
     }
+
+    val dialogPositiveChoice
+        get() = run {
+            viewModel.dialogIsShowing = false
+            setAlarm()
+        }
+
+    val dialogNegativeChoice
+        get() = run {
+            viewModel.dialogIsShowing = false
+            setAlarm2()
+        }
 
     companion object {
         const val musicPlayerAction = "ru.this.music_service.play"
