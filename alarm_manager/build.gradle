@@ -11,8 +11,8 @@ android {
         applicationId "com.example.alarm_manager"
         minSdk 30
         targetSdk 31
-        versionCode 6
-        versionName "2.3(f)"
+        versionCode 7
+        versionName "2.4"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

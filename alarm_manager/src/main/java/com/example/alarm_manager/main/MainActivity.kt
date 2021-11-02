@@ -46,22 +46,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     // Слушатель выбора времени
-    private val onTimeSetListener =
-        OnTimeSetListener { _, hourOfDay, minute ->
-            val calNow = getInstance()
-            val calSet = calNow.clone() as Calendar
-            calSet[HOUR_OF_DAY] = hourOfDay
-            calSet[MINUTE] = minute
-            calSet[SECOND] = 0
-            calSet[MILLISECOND] = 0
-            if (calSet <= calNow) {
-                // Если выбранное время на сегодня прошло,
-                // то переносим на завтра
-                calSet.add(DATE, 1)
-            }
-            targetCal = calSet
-            trySetAlarm()
+    private val onTimeSetListener = OnTimeSetListener { _, hourOfDay, minute ->
+        val calNow = getInstance()
+        val calSet = calNow.clone() as Calendar
+        calSet[HOUR_OF_DAY] = hourOfDay
+        calSet[MINUTE] = minute
+        calSet[SECOND] = 0
+        calSet[MILLISECOND] = 0
+        if (calSet <= calNow) {
+            // Если выбранное время на сегодня прошло,
+            // то переносим на завтра
+            calSet.add(DATE, 1)
         }
+        targetCal = calSet
+        trySetAlarm()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,20 +73,20 @@ class MainActivity : AppCompatActivity() {
                     musicIsInProcess.observe(this@MainActivity, { value ->
                         when (value) {
                             true -> butttonShowDialog.run {
-                                    setOnClickListener {
-                                        cancelAlarm()
-                                    }
-                                    text = "Выключить сигнализацию"
-                                    isEnabled = true
+                                setOnClickListener {
+                                    cancelAlarm()
                                 }
+                                text = "Выключить сигнализацию"
+                                isEnabled = true
+                            }
                             false -> butttonShowDialog.run {
-                                    setOnClickListener {
-                                        textViewAlarmPrompt.text = ""
-                                        openTimePickerDialog(true)
-                                    }
-                                    text = "Установить сигнализацию"
-                                    isEnabled = true
+                                setOnClickListener {
+                                    textViewAlarmPrompt.text = ""
+                                    openTimePickerDialog(true)
                                 }
+                                text = "Установить сигнализацию"
+                                isEnabled = true
+                            }
                             null -> musicIsInProcess.value = false
                         }
                     })
@@ -115,11 +114,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun trySetAlarm() {
-        if (SDK_INT < VERSION_CODES.S) setAlarm()
+        if (SDK_INT < VERSION_CODES.S) setAlarm(true)
         else {
             val permissionAskListener = object : PermissionUtils.PermissionAskListener {
                 override fun onPermissionGranted() {
-                    setAlarm()
+                    setAlarm(true)
                 }
 
                 override fun onPermissionRequest() {
@@ -139,7 +138,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun onPermissionDisabled() {
-                    setAlarm2()
+                    setAlarm(false)
                 }
             }
             PermissionUtils.checkPermission(
@@ -151,9 +150,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** Установка будильника с точным временем срабатывания */
+    /** Установка будильника
+     * @param exact флаг точного времени срабатывания */
     @SuppressLint("SetTextI18n", "UnspecifiedImmutableFlag")
-    private fun setAlarm() {
+    private fun setAlarm(exact: Boolean) {
         binding.run {
             textViewAlarmPrompt.text = "Сигнализация установлена на ${targetCal.time}"
             butttonShowDialog.isEnabled = false
@@ -166,35 +166,18 @@ class MainActivity : AppCompatActivity() {
             Intent(applicationContext, AlarmReceiver::class.java),
             0
         )
-        val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
-        alarmManager.setExactAndAllowWhileIdle(
-            RTC_WAKEUP,
-            targetCal.timeInMillis,
-            pendingIntent
-        )
-    }
-
-    /** Установка будильника с неточным временем срабатывания */
-    @SuppressLint("SetTextI18n", "UnspecifiedImmutableFlag")
-    private fun setAlarm2() {
-        binding.run {
-            textViewAlarmPrompt.text = "Сигнализация установлена на ${targetCal.time}"
-            butttonShowDialog.isEnabled = false
+        (getSystemService(ALARM_SERVICE) as AlarmManager).run {
+            if (exact) setExactAndAllowWhileIdle(// Сигнализация с точным временем срабатывания
+                RTC_WAKEUP,
+                targetCal.timeInMillis,
+                pendingIntent
+            )
+            else setAndAllowWhileIdle(// Сигнализация с неточным временем срабатывания
+                RTC_WAKEUP,
+                targetCal.timeInMillis,
+                pendingIntent
+            )
         }
-        registerReceiver(broadcastReceiver, broadcastIntentFilter)
-
-        val pendingIntent = PendingIntent.getBroadcast(
-            applicationContext,
-            rqsTime,
-            Intent(applicationContext, AlarmReceiver::class.java),
-            0
-        )
-        val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
-        alarmManager.setAndAllowWhileIdle(
-            RTC_WAKEUP,
-            targetCal.timeInMillis,
-            pendingIntent
-        )
     }
 
     @SuppressLint("UnspecifiedImmutableFlag")
@@ -223,13 +206,13 @@ class MainActivity : AppCompatActivity() {
     val dialogPositiveChoice
         get() = run {
             viewModel.dialogIsShowing = false
-            setAlarm()
+            setAlarm(true)
         }
 
     val dialogNegativeChoice
         get() = run {
             viewModel.dialogIsShowing = false
-            setAlarm2()
+            setAlarm(false)
         }
 
     companion object {
