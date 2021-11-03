@@ -1,39 +1,65 @@
 package com.example.coroutines
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil.setContentView
 import com.example.coroutines.databinding.ActivityMainBinding
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers.Main
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import timber.log.Timber
-import java.lang.Thread.currentThread
-import java.lang.Thread.sleep
 
-@DelicateCoroutinesApi
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var job: Job
     private lateinit var binding: ActivityMainBinding
 
+    @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Timber.run {
             binding = setContentView<ActivityMainBinding>(this@MainActivity, R.layout.activity_main)
                 .apply {
-                    button.setOnClickListener {
-                        d("Start")
-                        CoroutineScope(Main).launch {
-                            delay(1000L)
-                            d("Kitty")
-                            d("Thread from launch: ${currentThread().name}")
+                    textView.run {
+                        buttonLaunch.setOnClickListener {
+                            if (this@MainActivity::job.isInitialized && job.isActive) {
+                                // cancel the job
+                                job.cancel("Job cancelled by user")
+                            }
+                            text = ""
+                            // initialize the job
+                            job =
+                                CoroutineScope(Dispatchers.Main).launch(CoroutineName("Counter")) {
+                                    i("${coroutineContext[CoroutineName.Key]}")
+                                    // Loop through 10 down to 0
+                                    for (i in 10 downTo 0) {
+                                        delay(1000)
+                                        append("$i ")
+                                    }
+                                }.apply {
+                                    // invoke on job completion
+                                    invokeOnCompletion {
+                                        append("\n Completed")
+                                        it?.run {
+                                            append("\n $message")
+                                        }
+                                    }
+                                }
                         }
 
-                        d("Hello")
-                        sleep(5000L)
-                        d("Stop")
-                        d("Thread from onCreate: ${currentThread().name}")
+                        buttonCancel.setOnClickListener {
+                            if (this@MainActivity::job.isInitialized) {
+                                if (job.isActive) {
+                                    // cancel the job
+                                    job.cancel(
+                                        "Job cancelled by user"
+                                    )
+                                } else {
+                                    text = "Job is not active"
+                                }
+                            } else {
+                                text = "Job is not initialized"
+                            }
+                        }
                     }
                 }
         }
