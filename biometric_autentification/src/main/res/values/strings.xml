@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">Biometric_autentification</string>
+    <string name="biometric_auth_button_another_way">Another way</string>
+    <string name="default_message">Message</string>
+    <string name="authenticate_button_text">Authenticate</string>
+</resources>
