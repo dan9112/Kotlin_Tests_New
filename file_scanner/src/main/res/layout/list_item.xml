@@ -5,7 +5,7 @@
         android:layout_height="wrap_content"
         android:minHeight="40dp">
 
-        <ImageView
+        <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/id_item_icon"
             android:layout_width="18dp"
             android:layout_height="18dp"
@@ -15,7 +15,7 @@
             android:contentDescription="@string/list_item_content_description"
             android:src="@drawable/no_son" />
 
-        <TextView
+        <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/id_item_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
