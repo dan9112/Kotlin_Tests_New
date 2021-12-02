@@ -72,7 +72,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
+        viewModel = ViewModelProvider(this)[MainViewModel::class.java]
 
         adapter = TreeListAdapter(this, viewModel.list)
         DataBindingUtil.setContentView<ActivityMainBinding>(
@@ -80,7 +80,7 @@ class MainActivity : AppCompatActivity() {
             R.layout.activity_main
         ).apply {
             idListview.apply {
-                this.adapter = this@MainActivity.adapter
+                adapter = this@MainActivity.adapter
                 layoutManager = LinearLayoutManager(this@MainActivity)
             }
             this@MainActivity.progressBar = progressBar
