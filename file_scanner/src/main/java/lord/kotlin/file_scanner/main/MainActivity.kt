@@ -3,7 +3,6 @@ package lord.kotlin.file_scanner.main
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri.fromParts
 import android.os.Build.VERSION.SDK_INT
@@ -21,17 +20,17 @@ import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.Default
 import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import lord.kotlin.file_scanner.*
+import lord.kotlin.file_scanner.UserFeedbackDialogFragment.DialogModes
+import lord.kotlin.file_scanner.UserFeedbackDialogFragment.DialogModes.*
 import lord.kotlin.file_scanner.databinding.ActivityMainBinding
 import timber.log.Timber
 import java.io.File
-import java.util.*
-import lord.kotlin.file_scanner.UserFeedbackDialogFragment.DialogModes.*
-import lord.kotlin.file_scanner.UserFeedbackDialogFragment.DialogModes
-import kotlin.collections.ArrayList
 
 /** Главная активность приложения */
 class MainActivity : AppCompatActivity(), UserFeedbackDialogFragment.OnAgreePermission {
@@ -115,7 +114,7 @@ class MainActivity : AppCompatActivity(), UserFeedbackDialogFragment.OnAgreePerm
             R.layout.activity_main
         ).apply {
             viewModel.apply {
-                isInProcess.observe(this@MainActivity, { value ->
+                isInProcess.observe(this@MainActivity) { value ->
                     when (value) {
                         true -> {
                             progressBar.visibility = VISIBLE
@@ -126,11 +125,11 @@ class MainActivity : AppCompatActivity(), UserFeedbackDialogFragment.OnAgreePerm
                             scanButton.isEnabled = true
                         }
                     }
-                })
+                }
             }
 
             idListview.apply {
-                this.adapter = this@MainActivity.adapter
+                adapter = this@MainActivity.adapter
                 layoutManager = LinearLayoutManager(this@MainActivity)
             }
             scanButton = button.apply {
@@ -220,15 +219,12 @@ class MainActivity : AppCompatActivity(), UserFeedbackDialogFragment.OnAgreePerm
             Read -> requestPermissionLauncher.launch(READ_EXTERNAL_STORAGE)
             ReadToSettings -> {
                 startActivity(Intent(ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                    addFlags(FLAG_ACTIVITY_NEW_TASK) // (Опционально!) Открывает активность с настройками приложения как новое действие
                     data = fromParts("package", packageName, null)
                 })
                 scanButton.isEnabled = true
             }
             Manage -> if (SDK_INT >= VERSION_CODES.R) {
-                startActivity(Intent(ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
-                    addFlags(FLAG_ACTIVITY_NEW_TASK) // (Опционально!) Открывает активность с настройками приложения как новое действие
-                })
+                startActivity(Intent(ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
             }
         }
     }

@@ -3,9 +3,11 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { setUrl("https://jitpack.io") }
     }
 }
 rootProject.name = "Kotlin Tests"
 include ':app'
 include ':file_scanner'
 include ':tree_recyclerview'
+include ':nier_visualizer'

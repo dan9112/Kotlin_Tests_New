@@ -65,7 +65,10 @@ class TreeListAdapter(
                 list.add(it)
                 // Если этот элемент имеет подпункты и раскрывается
                 // передаём список подпунктов этого элемента
-                if (it.sons != null && it.isOpen) list.addAll(it.sons!!.getVisibleItemList)
+                if (it.sons != null && it.isOpen) {
+                    val sons = it.sons!!.getVisibleItemList
+                    list.addAll(sons)
+                }
             }
             return list
         }
