@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mainContent"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.mapbox.maps.MapView
+        android:id="@+id/mapView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:mapbox_cameraTargetLat="55.72529408263361"
+        app:mapbox_cameraTargetLng="52.43230215154219"
+        app:mapbox_cameraZoom="14.5" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/bottomViews"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/startTrip"
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/button_nav_off"
+            android:enabled="false"
+            android:padding="14dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/start_trip"
+            android:tint="@color/white"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@id/getRoute"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/getPosition"
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/button_nav_off"
+            android:padding="15dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/track_user"
+            android:tint="@color/white"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:ignore="SpeakableTextPresentCheck" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/getRoute"
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/button_nav_off"
+            android:padding="14dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/get_routes"
+            android:tint="@color/white"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@id/getPosition"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:ignore="SpeakableTextPresentCheck" />
+
+        <com.mapbox.navigation.ui.tripprogress.view.MapboxTripProgressView
+            android:id="@+id/tripProgressView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/startTrip"
+            app:layout_constraintStart_toStartOf="parent"
+            app:tripProgressDividerColor="@color/white"
+            app:tripProgressTextColor="@color/white" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
