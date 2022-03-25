@@ -9,5 +9,5 @@ class MapViewModel: ViewModel() {
 
     val cameraState = MutableLiveData<Boolean?>(null)
 
-    val routeState = MutableLiveData(false)
+    val routeState = MutableLiveData<Boolean?>(null)
 }
