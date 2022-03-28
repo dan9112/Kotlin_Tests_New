@@ -1,4 +1,4 @@
-package ru.kamaz.mapboxmap
+package ru.kamaz.mapboxmap.default_objects
 
 import android.animation.ValueAnimator
 import androidx.lifecycle.MutableLiveData
@@ -7,8 +7,11 @@ import com.mapbox.maps.plugin.locationcomponent.LocationConsumer
 
 class DefaultLocationConsumer : LocationConsumer {
 
-    var currentLocation = MutableLiveData<Point?>(null)
-    override fun onBearingUpdated(vararg bearing: Double, options: (ValueAnimator.() -> Unit)?) {}
+    val currentLocation = MutableLiveData<Point?>(null)
+    val currentBearing = MutableLiveData<Double?>(null)
+    override fun onBearingUpdated(vararg bearing: Double, options: (ValueAnimator.() -> Unit)?) {
+        currentBearing.value = bearing.last()
+    }
 
     override fun onLocationUpdated(vararg location: Point, options: (ValueAnimator.() -> Unit)?) {
         currentLocation.value = location.last()

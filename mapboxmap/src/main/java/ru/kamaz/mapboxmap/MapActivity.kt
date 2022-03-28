@@ -8,22 +8,18 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import android.location.Location
 import android.location.LocationManager
 import android.os.Bundle
-import android.view.View.GONE
+import android.util.Log
 import android.view.View.VISIBLE
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources.getDrawable
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
 import com.mapbox.android.gestures.MoveGestureDetector
-import com.mapbox.api.directions.v5.DirectionsCriteria
 import com.mapbox.api.directions.v5.models.DirectionsRoute
-import com.mapbox.api.directions.v5.models.RouteOptions
 import com.mapbox.geojson.Point
 import com.mapbox.maps.*
 import com.mapbox.maps.Style.Companion.MAPBOX_STREETS
@@ -36,38 +32,22 @@ import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
 import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
 import com.mapbox.maps.plugin.gestures.*
 import com.mapbox.maps.plugin.locationcomponent.*
-import com.mapbox.navigation.base.extensions.applyDefaultNavigationOptions
-import com.mapbox.navigation.base.extensions.applyLanguageAndVoiceUnitOptions
-import com.mapbox.navigation.base.options.NavigationOptions
-import com.mapbox.navigation.base.route.RouterCallback
-import com.mapbox.navigation.base.route.RouterFailure
 import com.mapbox.navigation.base.route.RouterOrigin
 import com.mapbox.navigation.core.MapboxNavigationProvider
 import com.mapbox.navigation.core.directions.session.RoutesObserver
-import com.mapbox.navigation.core.trip.session.LocationMatcherResult
-import com.mapbox.navigation.core.trip.session.LocationObserver
-import com.mapbox.navigation.ui.maps.location.NavigationLocationProvider
 import com.mapbox.navigation.ui.maps.route.line.api.MapboxRouteLineApi
 import com.mapbox.navigation.ui.maps.route.line.api.MapboxRouteLineView
-import com.mapbox.navigation.ui.maps.route.line.model.MapboxRouteLineOptions
 import com.mapbox.navigation.ui.maps.route.line.model.RouteLine
-import com.mapbox.navigation.ui.maps.route.line.model.RouteLineColorResources
-import com.mapbox.navigation.ui.maps.route.line.model.RouteLineResources
-import com.mapbox.navigation.utils.internal.toPoint
+import ru.kamaz.mapboxmap.MapUtils.getDefaultNavigationOptions
+import ru.kamaz.mapboxmap.MapUtils.getDefaultRouteLineOptions
+import ru.kamaz.mapboxmap.MapUtils.setStateEnable
 import ru.kamaz.mapboxmap.databinding.ActivityMapBinding
+import ru.kamaz.mapboxmap.default_objects.DefaultLocationConsumer
+import ru.kamaz.mapboxmap.default_objects.DefaultOnMoveListener
+import ru.kamaz.mapboxmap.default_objects.DefaultRouterCallback
 
 @MapboxExperimental
 class MapActivity : AppCompatActivity() {
-
-    private var currentPosition: Point? = null
-
-    private var routesObserverRegistered = false
-    private lateinit var pointAnnotationManager: PointAnnotationManager
-
-    private lateinit var deviceAnnotation: PointAnnotation
-
-    private lateinit var binding: ActivityMapBinding
-
     private val viewModel by viewModels<MapViewModel>()
 
     private val defaultLocationConsumer = DefaultLocationConsumer()
@@ -76,23 +56,16 @@ class MapActivity : AppCompatActivity() {
         binding.mapView.getMapboxMap().setCamera(CameraOptions.Builder().bearing(it).build())
     }
 
-    private val routeOptions: RouteOptions
-        get() = RouteOptions.builder()
-            // применяет параметры по умолчанию к параметрам маршрута
-            .applyDefaultNavigationOptions()
-            .applyLanguageAndVoiceUnitOptions(this)
-            // заменяем выбранный выше профиль по умолчанию на профиль пешехода
-            .profile(DirectionsCriteria.PROFILE_DRIVING)
+    private val routeOptions
+        get() = MapUtils.getDefaultRouteOptions(this)
             // в качестве начальной точки маршрута используем точку местонахождения
             // пользователя, а конечной - устройства (в данном примере его координаты статичны)
             .coordinatesList(
                 listOf(
-                    currentPosition,
+                    defaultLocationConsumer.currentLocation.value,
                     deviceAnnotation.point
                 )
             )
-            // добавляем поиск альтернативных маршрутов к месту назначения
-            .alternatives(true)
             .build()
 
     private val onIndicatorPositionChangedListener = OnIndicatorPositionChangedListener {
@@ -110,174 +83,30 @@ class MapActivity : AppCompatActivity() {
         }
     }
 
-    private val onMoveListener = object : OnMoveListener {
-        override fun onMoveBegin(detector: MoveGestureDetector) {}
-
-        override fun onMove(detector: MoveGestureDetector) = false
-
-        override fun onMoveEnd(detector: MoveGestureDetector) {}
+    private val onMoveListener = object : DefaultOnMoveListener() {
+        override fun onMoveBegin(detector: MoveGestureDetector) {
+            viewModel.cameraState.value = null
+        }
     }
 
     private val defaultConsumerCurrentLocationObserver = Observer<Point?> { point ->
-        currentPosition = point
+        viewModel.routeState.value = false
         binding.run {
-            if (point == null) {
-                getPosition.run {
-                    visibility = GONE
-                    isEnabled = false
-                }
-                getRoute.run {
-                    visibility = GONE
-                    isEnabled = false
-                }
-            } else {
-                getPosition.run {
-                    visibility = VISIBLE
-                    isEnabled = true
-                }
-                getRoute.run {
-                    visibility = VISIBLE
-                    isEnabled = true
-                }
-            }
+            listOf(getPosition, getRoute).setStateEnable(point != null)
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        binding = ActivityMapBinding.inflate(layoutInflater).apply {
-            setContentView(root)
-            defaultLocationProvider = DefaultLocationProvider(this@MapActivity)
-
-            workWithMap()
-            onMapReady()
-            buttonsSetup()
-            initNavResources()
-
-            defaultLocationConsumer.currentLocation.observe(
-                this@MapActivity,
-                defaultConsumerCurrentLocationObserver
-            )
-
-            viewModel.run {
-                gpsState.run {
-                    value =
-                        (getSystemService(LOCATION_SERVICE) as LocationManager).isLocationEnabled
-                    observe(this@MapActivity) { state ->
-                        if (state) mapView.run {
-                            gestures.setupListeners()
-                            location.initComponent()
-                        } else {
-                            mapView.resetLocationComponentAndGesturesListener()
-                            defaultLocationConsumer.currentLocation.value = null
-                            viewModel.cameraState.value = null
-                        }
-                    }
-                }
-                cameraState.observe(this@MapActivity) { state ->
-                    getPosition.setImageResource(
-                        when (state) {
-                            null -> R.drawable.track_user
-                            true -> R.drawable.track_user_1
-                            false -> R.drawable.track_user_2
-                        }
-                    )
-                }
-                routeState.observe(this@MapActivity) { state ->
-                    if (state == true) navigationProvider() else if (state == null) resetNavigationProvider()
-                }
-            }
+    private val mapboxNavigation by lazy {
+        MapboxNavigationProvider.run {
+            if (isCreated()) retrieve() else create(getDefaultNavigationOptions(this@MapActivity))
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        registerReceiver(gpsReceiver, IntentFilter().apply {
-            addAction(LocationManager.PROVIDERS_CHANGED_ACTION)
-        })
+    private val onMapClickListener = OnMapClickListener { point ->
+        updateAnnotationOnMap(point)
+        viewModel.routeState.value = false
+        false
     }
-
-    private fun initNavResources() {
-        val routeLineResources = RouteLineResources.Builder()
-            /*
-            Цвета, относящиеся к линии маршрута, можно настроить с помощью
-            [RouteLineColorResources]. Если используются цвета по умолчанию,
-            [RouteLineColorResources] не нужно устанавливать, как показано здесь, значения по
-            умолчанию будут использоваться внутренним строителем
-
-            Кастомные настройки цветов линий маршрутов:
-             */
-            .routeLineColorResources(
-                RouteLineColorResources.Builder()
-                    .routeUnknownCongestionColor(
-                        ContextCompat.getColor(
-                            this,
-                            R.color.button_color_center_nav
-                        )
-                    )// !меняет цвет основного маршрута!
-                    .routeCasingColor(
-                        ContextCompat.getColor(
-                            this,
-                            R.color.button_color_start_nav
-                        )
-                    )// !меняет цвет обводки основного маршрута!
-                    // .alternativeRouteUnknownCongestionColor(getColor(R.color.button_color_off_nav))// !меняет цвет альтернативного(ых) маршрута(ов)!
-                    // .alternativeRouteCasingColor(getColor(R.color.purple_700))// !меняет цвет обводки альтернативного(ых) маршрута(ов)!
-                    .build()
-            )
-            .build()
-        val options = MapboxRouteLineOptions.Builder(this)
-            .withRouteLineResources(routeLineResources)
-            .withRouteLineBelowLayerId("road-label")
-            .build()
-
-        routeLineApi = MapboxRouteLineApi(options)
-        routeLineView = MapboxRouteLineView(options)
-    }
-
-    private fun defaultProvider() = defaultLocationProvider.apply {
-        registerLocationConsumer(defaultLocationConsumer)
-    }
-
-    private fun navigationProvider() = mapboxNavigation.run {
-        requestRoutes(routeOptions, object : RouterCallback {
-            override fun onCanceled(
-                routeOptions: RouteOptions,
-                routerOrigin: RouterOrigin
-            ) {
-            }
-
-            override fun onFailure(
-                reasons: List<RouterFailure>,
-                routeOptions: RouteOptions
-            ) {
-            }
-
-            override fun onRoutesReady(
-                routes: List<DirectionsRoute>,
-                routerOrigin: RouterOrigin
-            ) {
-                registerRoutesObserver(routesObserver)
-                setRoutes(routes)
-            }
-        })
-        navigationLocationProvider
-    }
-
-    private fun resetNavigationProvider() = mapboxNavigation.run {
-        unregisterLocationObserver(locationObserver)
-        unregisterRoutesObserver(routesObserver)
-        routeLineApi.clearRouteLine { value ->
-            binding.mapView.getMapboxMap().getStyle()?.let { style ->
-                routeLineView.renderClearRouteLineValue(style, value)
-            }
-        }
-        setRoutes(emptyList())
-    }
-
-    private lateinit var routeLineApi: MapboxRouteLineApi
-    private lateinit var routeLineView: MapboxRouteLineView
-
 
     private val routesObserver = RoutesObserver { routeUpdateResult ->
         if (routeUpdateResult.routes.isNotEmpty()) {
@@ -303,56 +132,190 @@ class MapActivity : AppCompatActivity() {
         }
     }
 
-    private fun ActivityMapBinding.buttonsSetup() {
-        getPosition.setOnClickListener {
-            viewModel.cameraState.run {
-                when (value) {
-                    null -> {
+    private val GesturesPlugin.setupListeners: () -> Unit
+        get() = {
+            addOnMoveListener(onMoveListener)
+            addOnMapClickListener(onMapClickListener)
+        }
+
+    private val LocationComponentPlugin.initComponent: () -> Unit
+        get() = {
+            updateSettings { enabled = true }
+            setLocationProvider(defaultProvider())
+        }
+
+    private var routesObserverRegistered = false
+
+    private lateinit var pointAnnotationManager: PointAnnotationManager
+
+    private lateinit var deviceAnnotation: PointAnnotation
+
+    private lateinit var binding: ActivityMapBinding
+
+    private lateinit var routeLineApi: MapboxRouteLineApi
+
+    private lateinit var routeLineView: MapboxRouteLineView
+
+    private lateinit var defaultLocationProvider: LocationProvider
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityMapBinding.inflate(layoutInflater).apply {
+            setContentView(root)
+            defaultLocationProvider = DefaultLocationProvider(this@MapActivity)
+
+            workWithMap()
+            onMapReady()
+            buttonsSetup()
+            initNavResources()
+
+            registerReceiver(gpsReceiver, IntentFilter().apply {
+                addAction(LocationManager.PROVIDERS_CHANGED_ACTION)
+            })
+            defaultLocationConsumer.currentLocation.observe(
+                this@MapActivity,
+                defaultConsumerCurrentLocationObserver
+            )
+            viewModel.run {
+                gpsState.run {
+                    value =
+                        (getSystemService(LOCATION_SERVICE) as LocationManager).isLocationEnabled
+                    observe(this@MapActivity) { state ->
                         mapView.run {
-                            defaultLocationConsumer.currentLocation.value?.let {
-                                getMapboxMap().setCamera(CameraOptions.Builder().center(it).build())
+                            if (state) {
+                                gestures.setupListeners()
+                                location.initComponent()
+                            } else {
+                                resetLocationComponentAndGesturesListener()
+                                defaultLocationConsumer.run {
+                                    currentLocation.value = null
+                                    currentBearing.value = null
+                                }
+                                viewModel.cameraState.value = null
                             }
-                            location.addOnIndicatorPositionChangedListener(
-                                onIndicatorPositionChangedListener
-                            )
                         }
-                        value = false
-                    }
-                    true -> {
-                        mapView.location.removeOnIndicatorBearingChangedListener(
-                            onIndicatorBearingChangedListener
-                        )
-                        value = false
-                    }
-                    false -> {
-                        mapView.location.addOnIndicatorBearingChangedListener(
-                            onIndicatorBearingChangedListener
-                        )
-                        value = true
                     }
                 }
-            }
-        }
-        getRoute.setOnClickListener {
-            viewModel.routeState.run {
-                value = when (value) {
-                    true -> null
-                    null -> true
-                    false -> true
+                cameraState.observe(this@MapActivity) { state ->
+                    mapView.run {
+                        location.run {
+                            when (state) {
+                                null -> {
+                                    removeOnIndicatorPositionChangedListener(
+                                        onIndicatorPositionChangedListener
+                                    )
+                                    removeOnIndicatorBearingChangedListener(
+                                        onIndicatorBearingChangedListener
+                                    )
+                                }
+                                false -> {
+                                    defaultLocationConsumer.currentLocation.value?.let {
+                                        getMapboxMap().setCamera(
+                                            CameraOptions.Builder().center(it).build()
+                                        )
+                                    }
+                                    removeOnIndicatorBearingChangedListener(
+                                        onIndicatorBearingChangedListener
+                                    )
+                                    addOnIndicatorPositionChangedListener(
+                                        onIndicatorPositionChangedListener
+                                    )
+                                }
+                                true -> {
+                                    defaultLocationConsumer.currentBearing.value?.let {
+                                        getMapboxMap().setCamera(
+                                            CameraOptions.Builder().bearing(it).build()
+                                        )
+                                    }
+                                    addOnIndicatorBearingChangedListener(
+                                        onIndicatorBearingChangedListener
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    getPosition.setImageResource(
+                        when (state) {
+                            null -> R.drawable.track_user
+                            true -> R.drawable.track_user_1
+                            false -> R.drawable.track_user_2
+                        }
+                    )
+                }
+                routeState.observe(this@MapActivity) { state ->
+                    if (state == true) getRoutes() else if (state == null) resetRoutes()
                 }
             }
         }
     }
 
-    private val mapboxNavigation by lazy {
-        if (MapboxNavigationProvider.isCreated()) {
-            MapboxNavigationProvider.retrieve()
-        } else {
-            MapboxNavigationProvider.create(
-                NavigationOptions.Builder(this)
-                    .accessToken(getString(R.string.mapbox_access_token))
-                    .build()
+    private fun initNavResources() {
+        val options = getDefaultRouteLineOptions(this)
+
+        routeLineApi = MapboxRouteLineApi(options)
+        routeLineView = MapboxRouteLineView(options)
+    }
+
+    private fun defaultProvider() = defaultLocationProvider.apply {
+        registerLocationConsumer(defaultLocationConsumer)
+    }
+
+    private fun getRoutes() = mapboxNavigation.run {
+        if (defaultLocationConsumer.currentLocation.value != null) requestRoutes(
+            routeOptions,
+            object : DefaultRouterCallback() {
+                override fun onRoutesReady(
+                    routes: List<DirectionsRoute>,
+                    routerOrigin: RouterOrigin
+                ) {
+                    registerRoutesObserver(routesObserver)
+                    setRoutes(routes)
+                }
+            }) else {// При нормальном поведении икогда не должен срабатывать!
+            Log.e(
+                "MapActivity",
+                "Не удалось определить местоположения. Убедитесь, что GPS-модуль активен!"
             )
+        }
+    }
+
+    private fun resetRoutes() = mapboxNavigation.run {
+        unregisterRoutesObserver(routesObserver)
+        routeLineApi.clearRouteLine { value ->
+            binding.mapView.getMapboxMap().getStyle()?.let { style ->
+                routeLineView.renderClearRouteLineValue(style, value)
+            }
+        }
+        setRoutes(emptyList())
+    }
+
+    private fun ActivityMapBinding.buttonsSetup() {
+        getPosition.setOnClickListener {
+            viewModel.cameraState.run {
+                value = when (value) {
+                    null -> false
+                    true -> false
+                    false -> true
+                }
+            }
+        }
+        getRoute.run {
+            viewModel.routeState.run {
+                setOnClickListener {
+                    value = when (value) {
+                        true -> null
+                        null -> true
+                        false -> true
+                    }
+                }
+                setOnLongClickListener {
+                    if (value == null) false
+                    else {
+                        resetRoutes()
+                        true
+                    }
+                }
+            }
         }
     }
 
@@ -425,12 +388,6 @@ class MapActivity : AppCompatActivity() {
         }
     }
 
-    private val onMapClickListener = OnMapClickListener { point ->
-        updateAnnotationOnMap(point)
-        viewModel.routeState.value = false
-        false
-    }
-
     private fun updateAnnotationOnMap(newPoint: Point) =
         pointAnnotationManager.update(deviceAnnotation.apply { point = newPoint })
 
@@ -459,33 +416,6 @@ class MapActivity : AppCompatActivity() {
         }
     }
 
-    private val GesturesPlugin.setupListeners: () -> Unit
-        get() = {
-            addOnMoveListener(onMoveListener)
-            addOnMapClickListener(onMapClickListener)
-        }
-
-    private val LocationComponentPlugin.initComponent: () -> Unit
-        get() = {
-            updateSettings { enabled = true }
-            setLocationProvider(defaultProvider())
-        }
-
-    private val navigationLocationProvider = NavigationLocationProvider()
-
-    private lateinit var defaultLocationProvider: LocationProvider
-
-    private val locationObserver = object : LocationObserver {
-        override fun onNewLocationMatcherResult(locationMatcherResult: LocationMatcherResult) {
-            val location = locationMatcherResult.enhancedLocation
-            currentPosition = location.toPoint()
-            navigationLocationProvider.changePosition(location)
-        }
-
-        override fun onNewRawLocation(rawLocation: Location) {}
-
-    }
-
     private fun MapView.onCameraTrackingDismissed() {
         Toast.makeText(this@MapActivity, "onCameraTrackingDismissed", Toast.LENGTH_SHORT).show()
         location.run {
@@ -495,11 +425,6 @@ class MapActivity : AppCompatActivity() {
         gestures.removeOnMoveListener(onMoveListener)
     }
 
-    override fun onPause() {
-        super.onPause()
-        unregisterReceiver(gpsReceiver)
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         binding.mapView.run {
@@ -507,10 +432,8 @@ class MapActivity : AppCompatActivity() {
             getMapboxMap().removeOnMapClickListener(onMapClickListener)
         }
         mapboxNavigation.run {
-            unregisterLocationObserver(locationObserver)
             if (routesObserverRegistered) unregisterRoutesObserver(routesObserver)
         }
+        unregisterReceiver(gpsReceiver)
     }
 }
-
-
