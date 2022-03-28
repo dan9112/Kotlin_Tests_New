@@ -85,14 +85,17 @@ class MapActivity : AppCompatActivity() {
 
     private val onMoveListener = object : DefaultOnMoveListener() {
         override fun onMoveBegin(detector: MoveGestureDetector) {
-            viewModel.cameraState.value = null
+            viewModel.cameraState.postValue(null)
         }
     }
 
     private val defaultConsumerCurrentLocationObserver = Observer<Point?> { point ->
-        viewModel.routeState.value = false
         binding.run {
-            listOf(getPosition, getRoute).setStateEnable(point != null)
+            arrayListOf(getPosition).apply {
+                if (point != null || viewModel.routeState.value == null) add(
+                    getRoute
+                )
+            }.setStateEnable(point != null)
         }
     }
 
@@ -104,7 +107,9 @@ class MapActivity : AppCompatActivity() {
 
     private val onMapClickListener = OnMapClickListener { point ->
         updateAnnotationOnMap(point)
-        viewModel.routeState.value = false
+        viewModel.routeState.run {
+            if (value == true) postValue(false)
+        }
         false
     }
 
@@ -188,10 +193,10 @@ class MapActivity : AppCompatActivity() {
                             } else {
                                 resetLocationComponentAndGesturesListener()
                                 defaultLocationConsumer.run {
-                                    currentLocation.value = null
-                                    currentBearing.value = null
+                                    currentLocation.postValue(null)
+                                    currentBearing.postValue(null)
                                 }
-                                viewModel.cameraState.value = null
+                                viewModel.cameraState.postValue(null)
                             }
                         }
                     }
@@ -244,6 +249,7 @@ class MapActivity : AppCompatActivity() {
                 }
                 routeState.observe(this@MapActivity) { state ->
                     if (state == true) getRoutes() else if (state == null) resetRoutes()
+                    listOf(startTrip).setStateEnable(state != null)
                 }
             }
         }
@@ -302,7 +308,10 @@ class MapActivity : AppCompatActivity() {
         getRoute.run {
             viewModel.routeState.run {
                 setOnClickListener {
-                    value = when (value) {
+                    value = if (defaultLocationConsumer.currentLocation.value == null) {
+                        listOf(getRoute).setStateEnable(false)
+                        null
+                    } else when (value) {
                         true -> null
                         null -> true
                         false -> true
