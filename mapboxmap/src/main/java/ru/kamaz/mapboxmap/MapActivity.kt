@@ -77,13 +77,13 @@ class MapActivity : AppCompatActivity() {
         }
     }
 
-    private val gpsReceiver = object : BroadcastReceiver() {
+    private val defaultGpsReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             viewModel.gpsState.postValue((getSystemService(LOCATION_SERVICE) as LocationManager).isLocationEnabled)
         }
     }
 
-    private val onMoveListener = object : DefaultOnMoveListener() {
+    private val defaultOnMoveListener = object : DefaultOnMoveListener() {
         override fun onMoveBegin(detector: MoveGestureDetector) {
             viewModel.cameraState.postValue(null)
         }
@@ -123,7 +123,7 @@ class MapActivity : AppCompatActivity() {
                 // RouteLine: MapboxRouteLineView ожидает ненулевой ссылки на стиль карты. Данные,
                 // сгенерированные вызовом MapboxRouteLineApi выше, должны быть отображены
                 // MapboxRouteLineView, чтобы визуализировать изменения на карте.
-                binding.mapView.getMapboxMap().getStyle()?.apply {
+                binding.mapView.getMapboxMap().getStyle()?.run {
                     routeLineView.renderRouteDrawData(this, value)
                 }
             }
@@ -139,7 +139,7 @@ class MapActivity : AppCompatActivity() {
 
     private val GesturesPlugin.setupListeners: () -> Unit
         get() = {
-            addOnMoveListener(onMoveListener)
+            addOnMoveListener(defaultOnMoveListener)
             addOnMapClickListener(onMapClickListener)
         }
 
@@ -174,7 +174,7 @@ class MapActivity : AppCompatActivity() {
             buttonsSetup()
             initNavResources()
 
-            registerReceiver(gpsReceiver, IntentFilter().apply {
+            registerReceiver(defaultGpsReceiver, IntentFilter().apply {
                 addAction(LocationManager.PROVIDERS_CHANGED_ACTION)
             })
             defaultLocationConsumer.currentLocation.observe(
@@ -255,11 +255,9 @@ class MapActivity : AppCompatActivity() {
         }
     }
 
-    private fun initNavResources() {
-        val options = getDefaultRouteLineOptions(this)
-
-        routeLineApi = MapboxRouteLineApi(options)
-        routeLineView = MapboxRouteLineView(options)
+    private fun initNavResources() = getDefaultRouteLineOptions(this).run {
+        routeLineApi = MapboxRouteLineApi(this)
+        routeLineView = MapboxRouteLineView(this)
     }
 
     private fun defaultProvider() = defaultLocationProvider.apply {
@@ -431,7 +429,7 @@ class MapActivity : AppCompatActivity() {
             removeOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener)
             removeOnIndicatorBearingChangedListener(onIndicatorBearingChangedListener)
         }
-        gestures.removeOnMoveListener(onMoveListener)
+        gestures.removeOnMoveListener(defaultOnMoveListener)
     }
 
     override fun onDestroy() {
@@ -443,6 +441,6 @@ class MapActivity : AppCompatActivity() {
         mapboxNavigation.run {
             if (routesObserverRegistered) unregisterRoutesObserver(routesObserver)
         }
-        unregisterReceiver(gpsReceiver)
+        unregisterReceiver(defaultGpsReceiver)
     }
 }
