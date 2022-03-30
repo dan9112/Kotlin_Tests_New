@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
@@ -246,6 +247,26 @@ class MapActivity2 : AppCompatActivity() {
         }
     }
 
+    private val pixelDensity = Resources.getSystem().displayMetrics.density
+
+    private val overviewPadding by lazy {
+        EdgeInsets(
+            140.0 * pixelDensity,
+            40.0 * pixelDensity,
+            120.0 * pixelDensity,
+            40.0 * pixelDensity
+        )
+    }
+
+    private val followingPadding by lazy {
+        EdgeInsets(
+            180.0 * pixelDensity,
+            40.0 * pixelDensity,
+            150.0 * pixelDensity,
+            40.0 * pixelDensity
+        )
+    }
+
     private lateinit var navigationCameraAnimationsLifecycleListener: NavigationBasicGesturesHandler
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -255,7 +276,10 @@ class MapActivity2 : AppCompatActivity() {
             tripProgressView.background =
                 ContextCompat.getDrawable(this@MapActivity2, R.drawable.button_nav_off)
             defaultLocationProvider = DefaultLocationProvider(this@MapActivity2)
-            viewportDataSource = MapboxNavigationViewportDataSource(mapView.getMapboxMap())
+            viewportDataSource = MapboxNavigationViewportDataSource(mapView.getMapboxMap()).apply {
+                overviewPadding = this@MapActivity2.overviewPadding
+                followingPadding = this@MapActivity2.followingPadding
+            }
 
             registerReceiver(defaultGpsReceiver, IntentFilter().apply {
                 addAction(LocationManager.PROVIDERS_CHANGED_ACTION)
@@ -503,8 +527,7 @@ class MapActivity2 : AppCompatActivity() {
                         stopTripSession()
                     }
                     modelState.value = ModelStates.RouteBuilt
-                }
-                else if (modelState.value == ModelStates.RouteBuilt) {
+                } else if (modelState.value == ModelStates.RouteBuilt) {
                     mapboxNavigation.run {
                         registerRouteProgressObserver(routeProgressObserver)
                         startTripSession()
