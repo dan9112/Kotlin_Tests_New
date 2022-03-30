@@ -12,8 +12,8 @@ android {
         applicationId = "ru.kamaz.mapboxmap"
         minSdk = 29
         targetSdk = 31
-        versionCode = 6
-        versionName = "3.2.1"
+        versionCode = 7
+        versionName = "4.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -64,4 +64,7 @@ dependencies {
 
     // Activity extensions
     implementation ("androidx.activity:activity-ktx:1.4.0")
+
+    // LeakCanary
+    debugImplementation ("com.squareup.leakcanary:leakcanary-android:2.8.1")
 }

@@ -85,7 +85,7 @@ class MapActivity : AppCompatActivity() {
 
     private val defaultOnMoveListener = object : DefaultOnMoveListener() {
         override fun onMoveBegin(detector: MoveGestureDetector) {
-            viewModel.cameraState.postValue(null)
+            viewModel.cameraState_VM.postValue(null)
         }
     }
 
@@ -196,12 +196,12 @@ class MapActivity : AppCompatActivity() {
                                     currentLocation.postValue(null)
                                     currentBearing.postValue(null)
                                 }
-                                viewModel.cameraState.postValue(null)
+                                viewModel.cameraState_VM.postValue(null)
                             }
                         }
                     }
                 }
-                cameraState.observe(this@MapActivity) { state ->
+                cameraState_VM.observe(this@MapActivity) { state ->
                     mapView.run {
                         location.run {
                             when (state) {
@@ -295,7 +295,7 @@ class MapActivity : AppCompatActivity() {
 
     private fun ActivityMapBinding.buttonsSetup() {
         getPosition.setOnClickListener {
-            viewModel.cameraState.run {
+            viewModel.cameraState_VM.run {
                 value = when (value) {
                     null -> false
                     true -> false
