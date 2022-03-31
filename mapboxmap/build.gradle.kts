@@ -10,10 +10,10 @@ android {
 
     defaultConfig {
         applicationId = "ru.kamaz.mapboxmap"
-        minSdk = 29
+        minSdk = 21
         targetSdk = 31
-        versionCode = 9
-        versionName = "5.1"
+        versionCode = 10
+        versionName = "6.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
