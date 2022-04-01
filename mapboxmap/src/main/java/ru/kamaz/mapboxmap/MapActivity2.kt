@@ -19,13 +19,13 @@ import android.util.Log
 import android.widget.Toast
 import android.widget.Toast.LENGTH_LONG
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import com.mapbox.android.gestures.MoveGestureDetector
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.geojson.Point
@@ -45,6 +45,7 @@ import com.mapbox.maps.plugin.gestures.removeOnMapClickListener
 import com.mapbox.maps.plugin.locationcomponent.*
 import com.mapbox.navigation.base.formatter.DistanceFormatterOptions
 import com.mapbox.navigation.base.route.RouterOrigin
+import com.mapbox.navigation.core.MapboxNavigation
 import com.mapbox.navigation.core.MapboxNavigationProvider
 import com.mapbox.navigation.core.directions.session.RoutesObserver
 import com.mapbox.navigation.core.trip.session.LocationMatcherResult
@@ -71,14 +72,14 @@ import ru.kamaz.mapboxmap.default_objects.DefaultRouterCallback
 
 @MapboxExperimental
 class MapActivity2 : AppCompatActivity() {
-    private val viewModel by viewModels<MapViewModel>()
+    private lateinit var viewModel: MapViewModel
     private var _binding: ActivityMapBinding? = null
     private val binding: ActivityMapBinding
         get() = _binding!!
     private val defaultOnMapClickListener = OnMapClickListener { point ->
         updateAnnotationOnMap(point)
-        viewModel.routeState.run {
-            if (value == true) postValue(false)
+        viewModel.run {
+            if (routeState.value == true) setRouteStateValue(false, postValue = true)
         }
         false
     }
@@ -114,22 +115,20 @@ class MapActivity2 : AppCompatActivity() {
         }
     }
 
-    private val mapboxNavigation by lazy {
-        MapboxNavigationProvider.run {
-            if (isCreated()) retrieve() else create(MapUtils.getDefaultNavigationOptions(this@MapActivity2))
-        }
-    }
+    private lateinit var mapboxNavigation: MapboxNavigation
 
     private val defaultOnMoveListener = object : DefaultOnMoveListener() {
         override fun onMove(detector: MoveGestureDetector) = run {
-            viewModel.cameraState_VM.postValue(null)
+            viewModel.setCameraStateValue(null, postValue = true)
             false
         }
     }
 
     private val defaultConsumerCurrentLocationObserver = Observer<Point?> { point ->
-        if (point != null && viewModel.modelState.value == ModelStates.Base) viewModel.modelState.value =
-            ModelStates.UserIsTracked
+        if (point != null && viewModel.modelState.value == ModelStates.Base) viewModel.setModelStateValue(
+            ModelStates.UserIsTracked,
+            postValue = true
+        )
     }
 
     private val onIndicatorBearingChangedListener = OnIndicatorBearingChangedListener {
@@ -226,16 +225,16 @@ class MapActivity2 : AppCompatActivity() {
     private val defaultGpsStateObserver = Observer<Boolean> { state ->
         binding.mapView.location.updateSettings { enabled = state }
         when (viewModel.modelState.value) {
-            ModelStates.UserIsTracked -> if (!state) viewModel.modelState.postValue(
-                ModelStates.Base
+            ModelStates.UserIsTracked -> if (!state) viewModel.setModelStateValue(
+                ModelStates.Base, postValue = true
             )
-            ModelStates.RouteBuilt -> if (!state) viewModel.modelState.postValue(
-                ModelStates.RouteBuiltUserNotTracked
+            ModelStates.RouteBuilt -> if (!state) viewModel.setModelStateValue(
+                ModelStates.RouteBuiltUserNotTracked, postValue = true
             )
-            ModelStates.RouteBuiltUserNotTracked -> if (state) viewModel.modelState.postValue(
-                ModelStates.RouteBuilt
+            ModelStates.RouteBuiltUserNotTracked -> if (state) viewModel.setModelStateValue(
+                ModelStates.RouteBuilt, postValue = true
             )
-            else -> Log.e(
+            else -> Log.d(
                 "MapActivity2",
                 "Недопустимый статус модели во время изменения статуса GPS-модуля"
             )
@@ -249,45 +248,79 @@ class MapActivity2 : AppCompatActivity() {
                 unregisterRouteProgressObserver(routeProgressObserver)
                 stopTripSession()
             }
-            viewModel.modelState.value = ModelStates.RouteBuiltUserNotTracked
+            viewModel.setModelStateValue(ModelStates.RouteBuiltUserNotTracked, postValue = true)
         }
     }
 
-    private val pixelDensity = Resources.getSystem().displayMetrics.density
+    private lateinit var navigationCameraAnimationsLifecycleListener: NavigationBasicGesturesHandler
 
-    private val overviewPadding by lazy {
-        EdgeInsets(
-            140.0 * pixelDensity,
-            40.0 * pixelDensity,
-            120.0 * pixelDensity,
-            40.0 * pixelDensity
-        )
-    }
-
-    private val followingPadding by lazy {
-        EdgeInsets(
-            180.0 * pixelDensity,
-            40.0 * pixelDensity,
-            150.0 * pixelDensity,
-            40.0 * pixelDensity
-        )
-    }
-
-    private val navigationCameraAnimationsLifecycleListener by lazy {
-        NavigationBasicGesturesHandler(navigationCamera)
+    private val connectionObserver = Observer<Boolean> {
+        if (it) viewModel.setModelStateValue(ModelStates.Base, postValue = true) else if (!it) {
+            viewModel.setModelStateValue(null, postValue = true)
+            Log.e("NetworkStateLog", "Нет сети!")
+            //showDialog
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _binding = ActivityMapBinding.inflate(layoutInflater).apply {
             setContentView(root)
+            viewModel = ViewModelProvider(
+                this@MapActivity2,
+                ViewModelFactory(application)
+            )[MapViewModel::class.java]
+            viewportDataSource = MapboxNavigationViewportDataSource(mapView.getMapboxMap()).apply {
+                Resources.getSystem().displayMetrics.density.run {
+                    overviewPadding = EdgeInsets(
+                        140.0 * this,
+                        40.0 * this,
+                        120.0 * this,
+                        40.0 * this
+                    )
+                    followingPadding = EdgeInsets(
+                        180.0 * this,
+                        40.0 * this,
+                        150.0 * this,
+                        40.0 * this
+                    )
+                }
+            }
+            navigationCamera = mapView.run {
+                NavigationCamera(
+                    getMapboxMap(),
+                    camera,
+                    viewportDataSource
+                )
+            }
+            navigationCameraAnimationsLifecycleListener =
+                NavigationBasicGesturesHandler(navigationCamera)
+            mapboxNavigation = MapboxNavigationProvider.run {
+                if (isCreated()) retrieve() else create(MapUtils.getDefaultNavigationOptions(this@MapActivity2))
+            }
             tripProgressView.background =
                 ContextCompat.getDrawable(this@MapActivity2, R.drawable.button_nav_off)
-            defaultLocationProvider = DefaultLocationProvider(this@MapActivity2)
-            viewportDataSource = MapboxNavigationViewportDataSource(mapView.getMapboxMap()).apply {
-                overviewPadding = this@MapActivity2.overviewPadding
-                followingPadding = this@MapActivity2.followingPadding
+            tripProgressApi = run {
+                val distanceFormatterOptions =
+                    DistanceFormatterOptions.Builder(this@MapActivity2)
+                        .build()
+                val tripProgressFormatter =
+                    TripProgressUpdateFormatter.Builder(this@MapActivity2)
+                        .distanceRemainingFormatter(
+                            DistanceRemainingFormatter(
+                                distanceFormatterOptions
+                            )
+                        )
+                        .timeRemainingFormatter(
+                            TimeRemainingFormatter(this@MapActivity2)
+                        )
+                        .estimatedTimeToArrivalFormatter(
+                            EstimatedTimeToArrivalFormatter(this@MapActivity2)
+                        )
+                        .build()
+                MapboxTripProgressApi(tripProgressFormatter)
             }
+            defaultLocationProvider = DefaultLocationProvider(this@MapActivity2)
             onMapReady()
             initNavResources()
             buttonsSetup()
@@ -298,6 +331,7 @@ class MapActivity2 : AppCompatActivity() {
                     this@MapActivity2,
                     ACCESS_COARSE_LOCATION
                 ) != PackageManager.PERMISSION_GRANTED
+                && viewModel.modelState.value != null
             ) locationPermissionRequest.launch(
                 arrayOf(
                     ACCESS_COARSE_LOCATION,
@@ -306,15 +340,20 @@ class MapActivity2 : AppCompatActivity() {
             )
 
             viewModel.run {
+                connectionLiveData.observe(this@MapActivity2, connectionObserver)
                 modelState.run {
                     observe(this@MapActivity2) { state ->
                         state.let {
                             mapView.run {
                                 getMapboxMap().run {
                                     if (it == null) {
-                                        unregisterReceiver(defaultGpsReceiver)
+                                        try {
+                                            unregisterReceiver(defaultGpsReceiver)
+                                        } catch (e: IllegalArgumentException) {
+
+                                        }
                                         gpsState.removeObserver(navigationGpsStateObserver)
-                                        cameraState_VM.removeObserver(
+                                        cameraStateVM.removeObserver(
                                             navigationCameraStateObserver
                                         )
                                         mapboxNavigation.unregisterLocationObserver(
@@ -324,11 +363,11 @@ class MapActivity2 : AppCompatActivity() {
                                             navigationCameraAnimationsLifecycleListener
                                         )
                                     } else {
-                                        gpsState.value =
-                                            (getSystemService(LOCATION_SERVICE) as LocationManager).run {
-                                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) isLocationEnabled else
-                                                    isProviderEnabled(LocationManager.GPS_PROVIDER)
-                                            }
+                                        setGpsStateValue((getSystemService(LOCATION_SERVICE) as LocationManager).run {
+                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) isLocationEnabled else isProviderEnabled(
+                                                LocationManager.GPS_PROVIDER
+                                            )
+                                        })
                                         registerReceiver(defaultGpsReceiver, IntentFilter().apply {
                                             addAction(LocationManager.PROVIDERS_CHANGED_ACTION)
                                         })
@@ -339,7 +378,7 @@ class MapActivity2 : AppCompatActivity() {
                                         defaultLocationConsumer.currentLocation.removeObserver(
                                             defaultConsumerCurrentLocationObserver
                                         )
-                                        cameraState_VM.removeObserver(defaultCameraStateObserver)
+                                        cameraStateVM.removeObserver(defaultCameraStateObserver)
                                         location.removeOnIndicatorBearingChangedListener(
                                             onIndicatorBearingChangedListener
                                         )
@@ -354,7 +393,7 @@ class MapActivity2 : AppCompatActivity() {
                                                 this@MapActivity2,
                                                 navigationGpsStateObserver
                                             )
-                                            cameraState_VM.observe(
+                                            cameraStateVM.observe(
                                                 this@MapActivity2,
                                                 navigationCameraStateObserver
                                             )
@@ -371,10 +410,10 @@ class MapActivity2 : AppCompatActivity() {
                                             navigationCameraAnimationsLifecycleListener
                                         )
                                         location.run {
-                                            if (cameraState_VM.value != null) addOnIndicatorPositionChangedListener(
+                                            if (cameraStateVM.value != null) addOnIndicatorPositionChangedListener(
                                                 onIndicatorPositionChangedListener
                                             )
-                                            if (cameraState_VM.value == true) addOnIndicatorBearingChangedListener(
+                                            if (cameraStateVM.value == true) addOnIndicatorBearingChangedListener(
                                                 onIndicatorBearingChangedListener
                                             )
                                             setLocationProvider(defaultProvider())
@@ -390,7 +429,7 @@ class MapActivity2 : AppCompatActivity() {
                                             this@MapActivity2,
                                             defaultConsumerCurrentLocationObserver
                                         )
-                                        cameraState_VM.run {
+                                        cameraStateVM.run {
                                             removeObserver(navigationCameraStateObserver)
                                             observe(this@MapActivity2, defaultCameraStateObserver)
                                         }
@@ -411,8 +450,8 @@ class MapActivity2 : AppCompatActivity() {
                                     tripProgressView,
                                     startTrip
                                 ).setStateEnable(false)
-                                routeState.postValue(null)
-                                cameraState_VM.postValue(null)
+                                setRouteStateValue(null, postValue = true)
+                                setCameraStateValue(null, postValue = true)
                             }
                             ModelStates.Base -> {
                                 listOf(mapView, getPosition).setStateEnable(true)
@@ -421,26 +460,26 @@ class MapActivity2 : AppCompatActivity() {
                                     tripProgressView,
                                     startTrip
                                 ).setStateEnable(false)
-                                routeState.postValue(null)
+                                setRouteStateValue(null, postValue = true)
                             }
                             ModelStates.UserIsTracked -> {
                                 listOf(getPosition, getRoute, mapView).setStateEnable(true)
                                 listOf(tripProgressView, startTrip).setStateEnable(false)
-                                routeState.postValue(null)
+                                setRouteStateValue(null, postValue = true)
                             }
                             ModelStates.RouteBuilt -> {
                                 listOf(getPosition, getRoute, mapView, startTrip).setStateEnable(
                                     true
                                 )
                                 listOf(tripProgressView).setStateEnable(false)
-                                routeState.postValue(true)
+                                setRouteStateValue(true, postValue = true)
                             }
                             ModelStates.RouteBuiltUserNotTracked -> {
                                 listOf(getRoute, mapView).setStateEnable(true)
                                 listOf(getPosition, tripProgressView, startTrip).setStateEnable(
                                     false
                                 )
-                                routeState.postValue(false)
+                                setRouteStateValue(false, postValue = true)
                             }
                             ModelStates.RouteProgressIsTracked -> {
                                 listOf(
@@ -453,7 +492,6 @@ class MapActivity2 : AppCompatActivity() {
                             }
                         }
                     }
-                    value = ModelStates.Base
                 }
             }
         }
@@ -477,27 +515,22 @@ class MapActivity2 : AppCompatActivity() {
     }
 
     private fun askLocationPermissions() {
-        if (ActivityCompat.shouldShowRequestPermissionRationale(
-                this@MapActivity2,
-                ACCESS_COARSE_LOCATION
+        //     Toast.makeText(
+        //         this@MapActivity2,
+        //         "Доступ необходим для использования компонентов навигации",
+        //         LENGTH_LONG
+        //     ).show()
+        locationPermissionRequest.launch(
+            arrayOf(
+                ACCESS_COARSE_LOCATION,
+                ACCESS_FINE_LOCATION
             )
-        ) {
-            Toast.makeText(
-                this@MapActivity2,
-                "Доступ необходим для использования компонентов навигации",
-                LENGTH_LONG
-            ).show()
-            locationPermissionRequest.launch(
-                arrayOf(
-                    ACCESS_COARSE_LOCATION,
-                    ACCESS_FINE_LOCATION
-                )
-            )
-        } else Toast.makeText(
-            this@MapActivity2,
-            "Пожалуйста, включите в настройках самостоятельно",
-            LENGTH_LONG
-        ).show()
+        )
+        // } else Toast.makeText(
+        //     this@MapActivity2,
+        //     "Пожалуйста, включите в настройках самостоятельно",
+        //     LENGTH_LONG
+        // ).show()
     }
 
     private fun ActivityMapBinding.buttonsSetup() {
@@ -512,58 +545,55 @@ class MapActivity2 : AppCompatActivity() {
                             ACCESS_COARSE_LOCATION
                         ) != PackageManager.PERMISSION_GRANTED
                     ) askLocationPermissions()
-                    else Toast.makeText(this@MapActivity2, "Включите GPS-навигацию", LENGTH_LONG)
-                        .show()
-                } else cameraState_VM.run {
-                    value = when (value) {
+                } else setCameraStateValue(
+                    when (cameraStateVM.value) {
                         null -> false
                         true -> false
                         false -> true
                     }
-                }
+                )
             }
             getRoute.run {
-                modelState.run {
-                    setOnClickListener {
-                        when (value) {
-                            ModelStates.RouteBuiltUserNotTracked -> value =
-                                ModelStates.Base
-                            ModelStates.UserIsTracked -> value = ModelStates.RouteBuilt
-                            ModelStates.RouteBuilt -> if (routeState.value == false) routeState.value =
-                                true
-                            else if (routeState.value == true) value =
-                                ModelStates.UserIsTracked
-                            else -> Log.e(
-                                "MapActivity2",
-                                "Ошибка в доступности кнопки \"getRoute\""
-                            )
-                        }
+                setOnClickListener {
+                    when (modelState.value) {
+                        ModelStates.RouteBuiltUserNotTracked -> setModelStateValue(ModelStates.Base)
+                        ModelStates.UserIsTracked -> setModelStateValue(ModelStates.RouteBuilt)
+                        ModelStates.RouteBuilt -> if (routeState.value == false) setRouteStateValue(
+                            true
+                        )
+                        else if (routeState.value == true) setModelStateValue(ModelStates.UserIsTracked)
+                        else -> Log.e(
+                            "MapActivity2",
+                            "Ошибка в доступности кнопки \"getRoute\""
+                        )
                     }
-                    setOnLongClickListener {
-                        value = when (value) {
+                }
+                setOnLongClickListener {
+                    setModelStateValue(
+                        when (modelState.value) {
                             ModelStates.RouteBuilt -> {
-                                routeState.value = null
+                                setRouteStateValue(null)
                                 ModelStates.UserIsTracked
                             }
                             ModelStates.RouteBuiltUserNotTracked -> {
-                                routeState.value = null
+                                setRouteStateValue(null)
                                 ModelStates.Base
                             }
                             else -> return@setOnLongClickListener false
                         }
-                        true
-                    }
+                    )
+                    true
                 }
             }
             startTrip.setOnClickListener {
                 if (modelState.value == ModelStates.RouteProgressIsTracked) {
                     mapboxNavigation.run {
                         navigationCamera.requestNavigationCameraToOverview()
-                        cameraState_VM.value = null
+                        setCameraStateValue(null)
                         unregisterRouteProgressObserver(routeProgressObserver)
                         stopTripSession()
                     }
-                    modelState.value = ModelStates.RouteBuilt
+                    setModelStateValue(ModelStates.RouteBuilt)
                 } else if (modelState.value == ModelStates.RouteBuilt) {
                     mapboxNavigation.run {
                         registerRouteProgressObserver(routeProgressObserver)
@@ -575,12 +605,12 @@ class MapActivity2 : AppCompatActivity() {
                                 ACCESS_COARSE_LOCATION
                             ) != PackageManager.PERMISSION_GRANTED
                         ) {
-                            modelState.value = null
+                            setModelStateValue(null)
                             return@setOnClickListener
                         }
                         startTripSession()
                     }
-                    modelState.value = ModelStates.RouteProgressIsTracked
+                    setModelStateValue(ModelStates.RouteProgressIsTracked)
                 }
             }
         }
@@ -600,54 +630,48 @@ class MapActivity2 : AppCompatActivity() {
         var granted = false
         permissions.entries.forEach { if (it.value) granted = true }
         if (!granted) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, ACCESS_COARSE_LOCATION)) {
-                Toast.makeText(
+            when {
+                getSharedPreferences(
+                    "preference_permission",
+                    MODE_PRIVATE
+                ).getBoolean("location_permissions", true) -> {
+                    Toast.makeText(
+                        this,
+                        "Компоненты навигации недоступны, используется только карта",
+                        LENGTH_LONG
+                    ).show()
+                    getSharedPreferences("preference_permission", MODE_PRIVATE).edit().apply {
+                        putBoolean("location_permissions", false)
+                    }.apply()
+                }
+                ActivityCompat.shouldShowRequestPermissionRationale(
                     this,
-                    "Разрешение необходимо, чтобы использовать функционал навигации",
-                    LENGTH_LONG
-                ).show()
-            } else {
-                Toast.makeText(
-                    this,
-                    "Компоненты навигации недоступны, используется только карта",
-                    LENGTH_LONG
-                ).show()
+                    ACCESS_COARSE_LOCATION
+                ) -> {
+                    Toast.makeText(
+                        this,
+                        "Разрешение необходимо, чтобы использовать функционал навигации",
+                        LENGTH_LONG
+                    ).show()
+                }
+                else -> {
+                    Toast.makeText(
+                        this,
+                        "Компоненты навигации недоступны, используется только карта. Включите разрешения самостоятельно",
+                        LENGTH_LONG
+                    ).show()
+                }
             }
         }
-        viewModel.modelState.postValue(ModelStates.Base)
+        if (viewModel.modelState.value != null) viewModel.setModelStateValue(
+            ModelStates.Base,
+            postValue = true
+        )
     }
 
-    private val navigationCamera by lazy {
-        binding.mapView.run {
-            NavigationCamera(
-                getMapboxMap(),
-                camera,
-                viewportDataSource
-            )
-        }
-    }
+    private lateinit var navigationCamera: NavigationCamera
 
-    private val tripProgressApi by lazy {
-        val distanceFormatterOptions =
-            DistanceFormatterOptions.Builder(this@MapActivity2)
-                .build()
-        val tripProgressFormatter =
-            TripProgressUpdateFormatter.Builder(this@MapActivity2)
-                .distanceRemainingFormatter(
-                    DistanceRemainingFormatter(
-                        distanceFormatterOptions
-                    )
-                )
-                .timeRemainingFormatter(
-                    TimeRemainingFormatter(this@MapActivity2)
-                )
-                .estimatedTimeToArrivalFormatter(
-                    EstimatedTimeToArrivalFormatter(this@MapActivity2)
-                )
-                .build()
-        MapboxTripProgressApi(tripProgressFormatter)
-    }
-
+    private lateinit var tripProgressApi: MapboxTripProgressApi
     private lateinit var viewportDataSource: MapboxNavigationViewportDataSource
 
     private lateinit var routeLineApi: MapboxRouteLineApi
@@ -787,15 +811,15 @@ class MapActivity2 : AppCompatActivity() {
 
     private val defaultGpsReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            viewModel.gpsState.postValue((getSystemService(LOCATION_SERVICE) as LocationManager).run {
+            viewModel.setGpsStateValue((getSystemService(LOCATION_SERVICE) as LocationManager).run {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) isLocationEnabled else
                     isProviderEnabled(LocationManager.GPS_PROVIDER)
-            })
+            }, postValue = true)
         }
     }
 
     override fun onDestroy() {
-        super.onDestroy()
+        viewModel.connectionLiveData.removeObserver(connectionObserver)
         binding.mapView.run {
             location.run {
                 getLocationProvider()?.let {
@@ -809,13 +833,16 @@ class MapActivity2 : AppCompatActivity() {
                 removeOnMapClickListener(defaultOnMapClickListener)
             }
         }
-        viewModel.firstStart = false// for fragment's onDestroyView
         if (viewModel.modelState.value == ModelStates.RouteProgressIsTracked) mapboxNavigation.run {
             navigationCamera.requestNavigationCameraToOverview()
             unregisterRouteProgressObserver(routeProgressObserver)
             stopTripSession()
         }
         unregisterReceiver(defaultGpsReceiver)
-        mapboxNavigation.unregisterRoutesObserver(routesObserver)
+        mapboxNavigation.run {
+            unregisterRoutesObserver(routesObserver)
+            onDestroy()
+        }
+        super.onDestroy()
     }
 }

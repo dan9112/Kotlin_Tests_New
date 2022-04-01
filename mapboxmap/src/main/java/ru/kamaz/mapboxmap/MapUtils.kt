@@ -65,4 +65,5 @@ object MapUtils {
     fun getDefaultNavigationOptions(context: Context) = NavigationOptions.Builder(context)
         .accessToken(context.getString(R.string.mapbox_access_token))
         .build()
+
 }

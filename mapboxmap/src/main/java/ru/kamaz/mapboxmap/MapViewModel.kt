@@ -1,19 +1,51 @@
 package ru.kamaz.mapboxmap
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 
-class MapViewModel: ViewModel() {
+class MapViewModel(application: Application) : AndroidViewModel(application) {
+    private var _connectionLiveData: ConnectionLiveData? = ConnectionLiveData(application)
+    val connectionLiveData: LiveData<Boolean>
+        get() = _connectionLiveData!!
 
-    var firstStart = true
+    private val _gpsState = MutableLiveData(false)
+    val gpsState: LiveData<Boolean>
+        get() = _gpsState
 
-    val gpsState = MutableLiveData(false)
+    fun setGpsStateValue(value: Boolean, postValue: Boolean = false) = _gpsState.run {
+        if (postValue) postValue(value)
+        else setValue(value)
+    }
 
-    val cameraState_VM = MutableLiveData<Boolean?>(null)
+    private val _cameraState = MutableLiveData<Boolean?>(null)
+    val cameraStateVM: LiveData<Boolean?>
+        get() = _cameraState
 
-    val routeState = MutableLiveData<Boolean?>(null)
+    fun setCameraStateValue(value: Boolean?, postValue: Boolean = false) = _cameraState.run {
+        if (postValue) postValue(value)
+        else setValue(value)
+    }
 
-    val modelState = MutableLiveData<ModelStates>(null)// Модель находится в состоянии, когда работа с картой не разрешена
+    private val _routeState = MutableLiveData<Boolean?>(null)
+    val routeState: LiveData<Boolean?>
+        get() = _routeState
+
+    fun setRouteStateValue(value: Boolean?, postValue: Boolean = false) = _routeState.run {
+        if (postValue) postValue(value)
+        else setValue(value)
+    }
+
+    private val _modelState =
+        MutableLiveData<ModelStates?>(ModelStates.Base)// Модель находится в состоянии, когда работа с картой не разрешена
+    val modelState: LiveData<ModelStates?>
+        get() = _modelState
+
+    fun setModelStateValue(value: ModelStates?, postValue: Boolean = false) = _modelState.run {
+        if (postValue) postValue(value)
+        else setValue(value)
+    }
 
     enum class ModelStates {
         /**
@@ -40,5 +72,10 @@ class MapViewModel: ViewModel() {
          * Модель находится в состоянии, когда ведётся отслеживание прогресса движения по пути
          */
         RouteProgressIsTracked
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        _connectionLiveData = null
     }
 }
