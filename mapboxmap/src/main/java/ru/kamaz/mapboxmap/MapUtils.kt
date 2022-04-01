@@ -23,7 +23,7 @@ object MapUtils {
         .profile(DirectionsCriteria.PROFILE_DRIVING)
         // в качестве начальной точки маршрута используем точку местонахождения
         // пользователя, а конечной - устройства (в данном примере его координаты статичны)
-        .alternatives(true)
+        .alternatives(false)
 
     fun List<View>.setStateEnable(enable: Boolean) {
         forEach {

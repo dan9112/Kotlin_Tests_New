@@ -514,25 +514,6 @@ class MapActivity2 : AppCompatActivity() {
         }
     }
 
-    private fun askLocationPermissions() {
-        //     Toast.makeText(
-        //         this@MapActivity2,
-        //         "Доступ необходим для использования компонентов навигации",
-        //         LENGTH_LONG
-        //     ).show()
-        locationPermissionRequest.launch(
-            arrayOf(
-                ACCESS_COARSE_LOCATION,
-                ACCESS_FINE_LOCATION
-            )
-        )
-        // } else Toast.makeText(
-        //     this@MapActivity2,
-        //     "Пожалуйста, включите в настройках самостоятельно",
-        //     LENGTH_LONG
-        // ).show()
-    }
-
     private fun ActivityMapBinding.buttonsSetup() {
         viewModel.run {
             getPosition.setOnClickListener {
@@ -544,7 +525,13 @@ class MapActivity2 : AppCompatActivity() {
                             this@MapActivity2,
                             ACCESS_COARSE_LOCATION
                         ) != PackageManager.PERMISSION_GRANTED
-                    ) askLocationPermissions()
+                    ) locationPermissionRequest.launch(
+                        arrayOf(
+                            ACCESS_COARSE_LOCATION,
+                            ACCESS_FINE_LOCATION
+                        )
+                    )
+                    else if (gpsState.value != true) Toast.makeText(this@MapActivity2, "Для использования компонентов навигации, включите GPS", LENGTH_LONG).show()
                 } else setCameraStateValue(
                     when (cameraStateVM.value) {
                         null -> false
