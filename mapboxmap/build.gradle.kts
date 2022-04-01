@@ -12,8 +12,8 @@ android {
         applicationId = "ru.kamaz.mapboxmap"
         minSdk = 21
         targetSdk = 31
-        versionCode = 12
-        versionName = "7.1"
+        versionCode = 13
+        versionName = "7.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

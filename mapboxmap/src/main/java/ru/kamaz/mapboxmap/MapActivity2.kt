@@ -255,10 +255,30 @@ class MapActivity2 : AppCompatActivity() {
     private lateinit var navigationCameraAnimationsLifecycleListener: NavigationBasicGesturesHandler
 
     private val connectionObserver = Observer<Boolean> {
-        if (it) viewModel.setModelStateValue(ModelStates.Base, postValue = true) else if (!it) {
+        if (it) viewModel.setModelStateValue(ModelStates.Base, postValue = true) else {
             viewModel.setModelStateValue(null, postValue = true)
             Log.e("NetworkStateLog", "Нет сети!")
-            //showDialog
+            noNetDialogShow()
+        }
+    }
+
+    private fun noNetDialogShow() {
+        if (!viewModel.dialogIsShown) {
+            viewModel.dialogIsShown = true
+            NetworkConnectionLostDialog.newInstance { connected ->
+                viewModel.dialogIsShown = false
+                if (connected) {
+                    if (viewModel.connectionLiveData.value != true) {
+                        Toast.makeText(
+                            this,
+                            "Подключение к интернету отсутствует. Карта недоступна.",
+                            LENGTH_LONG
+                        ).show()
+
+                        finish()
+                    }
+                } else finish()
+            }.show(supportFragmentManager, "NED")
         }
     }
 
@@ -461,6 +481,7 @@ class MapActivity2 : AppCompatActivity() {
                                     startTrip
                                 ).setStateEnable(false)
                                 setRouteStateValue(null, postValue = true)
+                                setCameraStateValue(null, postValue = true)
                             }
                             ModelStates.UserIsTracked -> {
                                 listOf(getPosition, getRoute, mapView).setStateEnable(true)
@@ -480,6 +501,7 @@ class MapActivity2 : AppCompatActivity() {
                                     false
                                 )
                                 setRouteStateValue(false, postValue = true)
+                                setCameraStateValue(null, postValue = true)
                             }
                             ModelStates.RouteProgressIsTracked -> {
                                 listOf(
@@ -493,6 +515,7 @@ class MapActivity2 : AppCompatActivity() {
                         }
                     }
                 }
+                if (connectionLiveData.value != true) noNetDialogShow()
             }
         }
     }
@@ -531,7 +554,11 @@ class MapActivity2 : AppCompatActivity() {
                             ACCESS_FINE_LOCATION
                         )
                     )
-                    else if (gpsState.value != true) Toast.makeText(this@MapActivity2, "Для использования компонентов навигации, включите GPS", LENGTH_LONG).show()
+                    else if (gpsState.value != true) Toast.makeText(
+                        this@MapActivity2,
+                        "Для использования компонентов навигации, включите GPS",
+                        LENGTH_LONG
+                    ).show()
                 } else setCameraStateValue(
                     when (cameraStateVM.value) {
                         null -> false
@@ -825,7 +852,7 @@ class MapActivity2 : AppCompatActivity() {
             unregisterRouteProgressObserver(routeProgressObserver)
             stopTripSession()
         }
-        unregisterReceiver(defaultGpsReceiver)
+        if (viewModel.modelState.value != null && viewModel.modelState.value != ModelStates.RouteProgressIsTracked)unregisterReceiver(defaultGpsReceiver)
         mapboxNavigation.run {
             unregisterRoutesObserver(routesObserver)
             onDestroy()

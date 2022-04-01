@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 
 class MapViewModel(application: Application) : AndroidViewModel(application) {
+    var dialogIsShown = false
     private var _connectionLiveData: ConnectionLiveData? = ConnectionLiveData(application)
     val connectionLiveData: LiveData<Boolean>
         get() = _connectionLiveData!!
@@ -38,7 +39,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private val _modelState =
-        MutableLiveData<ModelStates?>(ModelStates.Base)// Модель находится в состоянии, когда работа с картой не разрешена
+        MutableLiveData<ModelStates?>(null)// Модель находится в состоянии, когда работа с картой не разрешена
     val modelState: LiveData<ModelStates?>
         get() = _modelState
 
@@ -74,8 +75,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         RouteProgressIsTracked
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        _connectionLiveData = null
-    }
+    // override fun onCleared() {
+    //     super.onCleared()
+    //     _connectionLiveData = null
+    // }
 }
