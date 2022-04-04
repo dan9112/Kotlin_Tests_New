@@ -12,7 +12,7 @@ class NetworkConnectionLostDialog : DialogFragment() {
     private lateinit var onDialogCloseCallbackCallback: OnDialogCloseCallback
 
     interface OnDialogCloseCallback : Serializable {
-        val closed: (Boolean) -> Unit
+        val closed: () -> Unit
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,22 +25,18 @@ class NetworkConnectionLostDialog : DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?) =
         AlertDialog.Builder(requireContext()).run {
             setMessage("Соединение с сетью интернет утеряно. Карта не может работать без доступа к сети интернет. Подключитесь к интернету для работы с картой")
-            setPositiveButton("Подключено") { _, _ ->
-                onDialogCloseCallbackCallback.closed(true)
+            setPositiveButton("Закрыть карту") { _, _ ->
+                onDialogCloseCallbackCallback.closed()
                 dismiss()
             }
-            setNegativeButton("Закрыть карту") { dialog, _ -> dialog.cancel() }
-            create()
+            create().apply {
+                this.setCanceledOnTouchOutside(false)
+            }
         }
-
-    override fun onCancel(dialog: DialogInterface) {
-        onDialogCloseCallbackCallback.closed(false)
-        super.onCancel(dialog)
-    }
 
     companion object {
         @JvmStatic
-        fun newInstance(onDialogCloseCallbackCallback: (connected: Boolean) -> Unit) =
+        fun newInstance(onDialogCloseCallbackCallback: () -> Unit) =
             NetworkConnectionLostDialog().apply {
                 arguments = Bundle().apply {
                     putSerializable(ARG_PARAM1, object : OnDialogCloseCallback {

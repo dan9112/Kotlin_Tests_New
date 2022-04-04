@@ -19,7 +19,6 @@ object MapUtils {
         // применяет параметры по умолчанию к параметрам маршрута
         .applyDefaultNavigationOptions()
         .applyLanguageAndVoiceUnitOptions(context)
-        // заменяем выбранный выше профиль по умолчанию на профиль пешехода
         .profile(DirectionsCriteria.PROFILE_DRIVING)
         // в качестве начальной точки маршрута используем точку местонахождения
         // пользователя, а конечной - устройства (в данном примере его координаты статичны)

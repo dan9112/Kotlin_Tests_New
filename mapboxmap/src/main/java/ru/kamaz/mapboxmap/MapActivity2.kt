@@ -2,6 +2,7 @@ package ru.kamaz.mapboxmap
 
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -10,22 +11,27 @@ import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.location.LocationManager
+import android.net.ConnectivityManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
-import android.widget.Toast
-import android.widget.Toast.LENGTH_LONG
+import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import com.google.android.material.snackbar.Snackbar
 import com.mapbox.android.gestures.MoveGestureDetector
 import com.mapbox.api.directions.v5.models.DirectionsRoute
 import com.mapbox.geojson.Point
@@ -255,29 +261,38 @@ class MapActivity2 : AppCompatActivity() {
     private lateinit var navigationCameraAnimationsLifecycleListener: NavigationBasicGesturesHandler
 
     private val connectionObserver = Observer<Boolean> {
-        if (it) viewModel.setModelStateValue(ModelStates.Base, postValue = true) else {
+        if (it) {
+            viewModel.setModelStateValue(ModelStates.Base, postValue = true)
+            if (viewModel.dialogIsShown) {
+                (supportFragmentManager.findFragmentByTag("NED") as? DialogFragment)?.dismiss()
+                viewModel.dialogIsShown = false
+            }
+        } else if (!it) {
             viewModel.setModelStateValue(null, postValue = true)
             Log.e("NetworkStateLog", "Нет сети!")
             noNetDialogShow()
         }
     }
 
+    @SuppressLint("ShowToast")
     private fun noNetDialogShow() {
         if (!viewModel.dialogIsShown) {
             viewModel.dialogIsShown = true
-            NetworkConnectionLostDialog.newInstance { connected ->
+            NetworkConnectionLostDialog.newInstance {
                 viewModel.dialogIsShown = false
-                if (connected) {
-                    if (viewModel.connectionLiveData.value != true) {
-                        Toast.makeText(
+                if (viewModel.connectionLiveData.value != true) {
+                    Snackbar.make(
+                        binding.root,
+                        "Подключение к интернету отсутствует. Карта недоступна.",
+                        Snackbar.LENGTH_LONG
+                    ).setTextColor(Color.WHITE).setBackgroundTint(
+                        ContextCompat.getColor(
                             this,
-                            "Подключение к интернету отсутствует. Карта недоступна.",
-                            LENGTH_LONG
-                        ).show()
-
-                        finish()
-                    }
-                } else finish()
+                            R.color.button_color_off_nav
+                        )
+                    ).show()
+                    finish()
+                }
             }.show(supportFragmentManager, "NED")
         }
     }
@@ -352,36 +367,34 @@ class MapActivity2 : AppCompatActivity() {
                     ACCESS_COARSE_LOCATION
                 ) != PackageManager.PERMISSION_GRANTED
                 && viewModel.modelState.value != null
-            ) locationPermissionRequest.launch(
-                arrayOf(
-                    ACCESS_COARSE_LOCATION,
-                    ACCESS_FINE_LOCATION
-                )
-            )
+            ) askPermissions()
 
             viewModel.run {
                 connectionLiveData.observe(this@MapActivity2, connectionObserver)
+                val connectManager =
+                    (getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (connectManager.activeNetwork == null) noNetDialogShow()
+                } else @Suppress("DEPRECATION") if (connectManager.activeNetworkInfo == null || !connectManager.activeNetworkInfo!!.isConnected) noNetDialogShow()
                 modelState.run {
                     observe(this@MapActivity2) { state ->
                         state.let {
                             mapView.run {
                                 getMapboxMap().run {
                                     if (it == null) {
-                                        try {
+                                        if (!firstTry) {// При первом включении ничего ещё нет
                                             unregisterReceiver(defaultGpsReceiver)
-                                        } catch (e: IllegalArgumentException) {
-
-                                        }
-                                        gpsState.removeObserver(navigationGpsStateObserver)
-                                        cameraStateVM.removeObserver(
-                                            navigationCameraStateObserver
-                                        )
-                                        mapboxNavigation.unregisterLocationObserver(
-                                            locationObserver
-                                        )
-                                        camera.removeCameraAnimationsLifecycleListener(
-                                            navigationCameraAnimationsLifecycleListener
-                                        )
+                                            gpsState.removeObserver(navigationGpsStateObserver)
+                                            cameraStateVM.removeObserver(
+                                                navigationCameraStateObserver
+                                            )
+                                            mapboxNavigation.unregisterLocationObserver(
+                                                locationObserver
+                                            )
+                                            camera.removeCameraAnimationsLifecycleListener(
+                                                navigationCameraAnimationsLifecycleListener
+                                            )
+                                        } else firstTry = false
                                     } else {
                                         setGpsStateValue((getSystemService(LOCATION_SERVICE) as LocationManager).run {
                                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) isLocationEnabled else isProviderEnabled(
@@ -515,7 +528,6 @@ class MapActivity2 : AppCompatActivity() {
                         }
                     }
                 }
-                if (connectionLiveData.value != true) noNetDialogShow()
             }
         }
     }
@@ -537,6 +549,7 @@ class MapActivity2 : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("ShowToast")
     private fun ActivityMapBinding.buttonsSetup() {
         viewModel.run {
             getPosition.setOnClickListener {
@@ -548,16 +561,16 @@ class MapActivity2 : AppCompatActivity() {
                             this@MapActivity2,
                             ACCESS_COARSE_LOCATION
                         ) != PackageManager.PERMISSION_GRANTED
-                    ) locationPermissionRequest.launch(
-                        arrayOf(
-                            ACCESS_COARSE_LOCATION,
-                            ACCESS_FINE_LOCATION
-                        )
-                    )
-                    else if (gpsState.value != true) Toast.makeText(
-                        this@MapActivity2,
+                    ) askPermissions()
+                    else if (gpsState.value != true) Snackbar.make(
+                        binding.root,
                         "Для использования компонентов навигации, включите GPS",
-                        LENGTH_LONG
+                        Snackbar.LENGTH_LONG
+                    ).setTextColor(Color.WHITE).setBackgroundTint(
+                        ContextCompat.getColor(
+                            this@MapActivity2,
+                            R.color.button_color_off_nav
+                        )
                     ).show()
                 } else setCameraStateValue(
                     when (cameraStateVM.value) {
@@ -638,49 +651,103 @@ class MapActivity2 : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("ShowToast")
+    private fun ActivityMapBinding.askPermissions() {
+        val snackBar: Snackbar
+        if (ActivityCompat.shouldShowRequestPermissionRationale(
+                this@MapActivity2,
+                ACCESS_COARSE_LOCATION
+            )
+        ) {
+            getSharedPreferences("preference_permission", MODE_PRIVATE).edit().apply {
+                putBoolean("location_permissions", false)
+            }.apply()
+            snackBar = Snackbar.make(
+                root,
+                "Разрешение необходимо, чтобы использовать компоненты навигации",
+                Snackbar.LENGTH_LONG
+            )
+            snackBar.setAction("Ok") {
+                locationPermissionRequest.launch(
+                    arrayOf(
+                        ACCESS_COARSE_LOCATION,
+                        ACCESS_FINE_LOCATION
+                    )
+                )
+            }.setActionTextColor(ContextCompat.getColor(this@MapActivity2, R.color.button_color_center_nav))
+        } else {
+            val callback = object : Snackbar.Callback() {
+                override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
+                    super.onDismissed(transientBottomBar, event)
+                    locationPermissionRequest.launch(
+                        arrayOf(
+                            ACCESS_COARSE_LOCATION,
+                            ACCESS_FINE_LOCATION
+                        )
+                    )
+                }
+            }
+            snackBar = Snackbar.make(
+                root,
+                "Нет доступа к компонентам навигации",
+                Snackbar.LENGTH_SHORT
+            ).addCallback(callback)
+            snackBar.view.setOnClickListener {
+                snackBar.dismiss()
+            }
+        }
+        snackBar.setTextColor(Color.WHITE).setBackgroundTint(
+            ContextCompat.getColor(
+                this@MapActivity2,
+                R.color.button_color_off_nav
+            )
+        ).show()
+    }
+
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         var granted = false
         permissions.entries.forEach { if (it.value) granted = true }
         if (!granted) {
+            val snackBar: Snackbar
             when {
                 getSharedPreferences(
                     "preference_permission",
                     MODE_PRIVATE
                 ).getBoolean("location_permissions", true) -> {
-                    Toast.makeText(
-                        this,
+                    snackBar = Snackbar.make(
+                        binding.root,
                         "Компоненты навигации недоступны, используется только карта",
-                        LENGTH_LONG
-                    ).show()
-                    getSharedPreferences("preference_permission", MODE_PRIVATE).edit().apply {
-                        putBoolean("location_permissions", false)
-                    }.apply()
+                        Snackbar.LENGTH_SHORT
+                    )
                 }
-                ActivityCompat.shouldShowRequestPermissionRationale(
-                    this,
-                    ACCESS_COARSE_LOCATION
-                ) -> {
-                    Toast.makeText(
-                        this,
-                        "Разрешение необходимо, чтобы использовать функционал навигации",
-                        LENGTH_LONG
-                    ).show()
-                }
-                else -> {
-                    Toast.makeText(
-                        this,
-                        "Компоненты навигации недоступны, используется только карта. Включите разрешения самостоятельно",
-                        LENGTH_LONG
-                    ).show()
+                else -> snackBar = Snackbar.make(
+                    binding.root,
+                    "Компоненты навигации недоступны, используется только карта. Включите разрешение определения местоположения самостоятельно",
+                    Snackbar.LENGTH_SHORT
+                ).apply {
+                    view.run {
+                        findViewById<TextView>(R.id.snackbar_text).maxLines = 3
+                        setOnClickListener {
+                            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                data = Uri.fromParts("package", packageName, null)
+                            })
+                        }
+                    }
                 }
             }
+            snackBar.setTextColor(Color.WHITE).setBackgroundTint(
+                ContextCompat.getColor(
+                    this,
+                    R.color.button_color_off_nav
+                )
+            ).show()
+            if (viewModel.modelState.value != null && viewModel.modelState.value != ModelStates.Base) viewModel.setModelStateValue(
+                ModelStates.Base,
+                postValue = true
+            )
         }
-        if (viewModel.modelState.value != null) viewModel.setModelStateValue(
-            ModelStates.Base,
-            postValue = true
-        )
     }
 
     private lateinit var navigationCamera: NavigationCamera
@@ -815,7 +882,6 @@ class MapActivity2 : AppCompatActivity() {
     }
 
     private fun MapView.onCameraTrackingDismissed() {
-        Toast.makeText(this@MapActivity2, "onCameraTrackingDismissed", Toast.LENGTH_SHORT).show()
         location.run {
             removeOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener)
             removeOnIndicatorBearingChangedListener(onIndicatorBearingChangedListener)
@@ -852,7 +918,9 @@ class MapActivity2 : AppCompatActivity() {
             unregisterRouteProgressObserver(routeProgressObserver)
             stopTripSession()
         }
-        if (viewModel.modelState.value != null && viewModel.modelState.value != ModelStates.RouteProgressIsTracked)unregisterReceiver(defaultGpsReceiver)
+        if (viewModel.modelState.value != null && viewModel.modelState.value != ModelStates.RouteProgressIsTracked) unregisterReceiver(
+            defaultGpsReceiver
+        )
         mapboxNavigation.run {
             unregisterRoutesObserver(routesObserver)
             onDestroy()

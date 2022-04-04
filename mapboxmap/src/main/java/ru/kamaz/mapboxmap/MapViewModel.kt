@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 
 class MapViewModel(application: Application) : AndroidViewModel(application) {
+    var firstTry = true
     var dialogIsShown = false
     private var _connectionLiveData: ConnectionLiveData? = ConnectionLiveData(application)
     val connectionLiveData: LiveData<Boolean>
