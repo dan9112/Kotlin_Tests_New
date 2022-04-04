@@ -4,6 +4,8 @@ import android.view.LayoutInflater
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.view.ViewGroup
+import androidx.core.text.HtmlCompat
+import androidx.core.text.HtmlCompat.FROM_HTML_MODE_COMPACT
 import androidx.recyclerview.widget.RecyclerView
 import ru.kamaz.kotlin_tests.R
 import ru.kamaz.kotlin_tests.databinding.SearchViewItemBinding
@@ -30,14 +32,14 @@ class WikiArticlesInfoViewHolder(private val binding: SearchViewItemBinding) :
             articleShortText.run {
                 var descriptionVisibility = GONE
                 if (snippet != null) {
-                    text = snippet
+                    text = HtmlCompat.fromHtml(snippet!!, FROM_HTML_MODE_COMPACT)
                     descriptionVisibility = VISIBLE
                 }
                 visibility = descriptionVisibility
             }
 
             articleData.run {
-                text = timestamp
+                text = timestamp.replace("T", "  ").substringBefore("Z")
                 visibility = VISIBLE
             }
         }
