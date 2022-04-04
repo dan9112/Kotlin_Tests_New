@@ -11,8 +11,8 @@ android {
         applicationId = "ru.kamaz.kotlin_tests"
         minSdk = 21
         targetSdk = 31
-        versionCode = 2
-        versionName = "android_paging 1.1"
+        versionCode = 3
+        versionName = "android_paging 2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

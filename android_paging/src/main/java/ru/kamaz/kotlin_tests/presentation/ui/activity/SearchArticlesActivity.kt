@@ -16,8 +16,9 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import ru.kamaz.kotlin_tests.databinding.ActivitySearchWikiArticlesBinding
 import ru.kamaz.kotlin_tests.domain.model.WikiArticleInfo
-import ru.kamaz.kotlin_tests.presentation.view_model.Injection
 import ru.kamaz.kotlin_tests.presentation.ui.recycler_view_adapter.WikiArticlesInfoAdapter
+import ru.kamaz.kotlin_tests.presentation.ui.recycler_view_adapter.WikiArticlesInfoStateAdapter
+import ru.kamaz.kotlin_tests.presentation.view_model.Injection
 import ru.kamaz.kotlin_tests.presentation.view_model.SearchArticlesViewModel
 import ru.kamaz.kotlin_tests.presentation.view_model.UiAction
 import ru.kamaz.kotlin_tests.presentation.view_model.UiState
@@ -49,7 +50,10 @@ class SearchArticlesActivity : AppCompatActivity() {
         uiActions: (UiAction) -> Unit
     ) {
         val searchAdapter = WikiArticlesInfoAdapter()
-        list.adapter = searchAdapter
+        list.adapter = searchAdapter.withLoadStateHeaderAndFooter(
+            header = WikiArticlesInfoStateAdapter { searchAdapter.retry() },
+            footer = WikiArticlesInfoStateAdapter { searchAdapter.retry() }
+        )
 
         bindSearch(uiState = uiState, onQueryChanged = uiActions)
         bindList(

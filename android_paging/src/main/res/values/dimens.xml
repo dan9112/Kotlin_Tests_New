@@ -4,4 +4,5 @@
     <dimen name="row_item_margin_horizontal">12dp</dimen>
     <dimen name="search_name_size">24sp</dimen>
     <dimen name="search_description_size">16sp</dimen>
+    <dimen name="error_text_size">24sp</dimen>
 </resources>
