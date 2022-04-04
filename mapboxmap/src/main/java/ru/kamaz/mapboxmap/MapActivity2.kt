@@ -7,7 +7,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
+import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -26,7 +26,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.core.app.ActivityCompat
+import androidx.core.app.ActivityCompat.checkSelfPermission
+import androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Observer
@@ -359,15 +360,6 @@ class MapActivity2 : AppCompatActivity() {
             onMapReady()
             initNavResources()
             buttonsSetup()
-            if (ActivityCompat.checkSelfPermission(
-                    this@MapActivity2,
-                    ACCESS_FINE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                    this@MapActivity2,
-                    ACCESS_COARSE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED
-                && viewModel.modelState.value != null
-            ) askPermissions()
 
             viewModel.run {
                 connectionLiveData.observe(this@MapActivity2, connectionObserver)
@@ -394,7 +386,7 @@ class MapActivity2 : AppCompatActivity() {
                                             camera.removeCameraAnimationsLifecycleListener(
                                                 navigationCameraAnimationsLifecycleListener
                                             )
-                                        } else firstTry = false
+                                        }
                                     } else {
                                         setGpsStateValue((getSystemService(LOCATION_SERVICE) as LocationManager).run {
                                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) isLocationEnabled else isProviderEnabled(
@@ -487,6 +479,17 @@ class MapActivity2 : AppCompatActivity() {
                                 setCameraStateValue(null, postValue = true)
                             }
                             ModelStates.Base -> {
+                                if (firstTry) {
+                                    if (checkSelfPermission(
+                                            this@MapActivity2,
+                                            ACCESS_FINE_LOCATION
+                                        ) != PERMISSION_GRANTED && checkSelfPermission(
+                                            this@MapActivity2,
+                                            ACCESS_COARSE_LOCATION
+                                        ) != PERMISSION_GRANTED
+                                    ) askPermissions()
+                                    firstTry = false
+                                }
                                 listOf(mapView, getPosition).setStateEnable(true)
                                 listOf(
                                     getRoute,
@@ -554,13 +557,13 @@ class MapActivity2 : AppCompatActivity() {
         viewModel.run {
             getPosition.setOnClickListener {
                 if (modelState.value == ModelStates.Base) {
-                    if (ActivityCompat.checkSelfPermission(
+                    if (checkSelfPermission(
                             this@MapActivity2,
                             ACCESS_FINE_LOCATION
-                        ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                        ) != PERMISSION_GRANTED && checkSelfPermission(
                             this@MapActivity2,
                             ACCESS_COARSE_LOCATION
-                        ) != PackageManager.PERMISSION_GRANTED
+                        ) != PERMISSION_GRANTED
                     ) askPermissions()
                     else if (gpsState.value != true) Snackbar.make(
                         binding.root,
@@ -624,13 +627,13 @@ class MapActivity2 : AppCompatActivity() {
                 } else if (modelState.value == ModelStates.RouteBuilt) {
                     mapboxNavigation.run {
                         registerRouteProgressObserver(routeProgressObserver)
-                        if (ActivityCompat.checkSelfPermission(
+                        if (checkSelfPermission(
                                 this@MapActivity2,
                                 ACCESS_FINE_LOCATION
-                            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                            ) != PERMISSION_GRANTED && checkSelfPermission(
                                 this@MapActivity2,
                                 ACCESS_COARSE_LOCATION
-                            ) != PackageManager.PERMISSION_GRANTED
+                            ) != PERMISSION_GRANTED
                         ) {
                             setModelStateValue(null)
                             return@setOnClickListener
@@ -654,11 +657,7 @@ class MapActivity2 : AppCompatActivity() {
     @SuppressLint("ShowToast")
     private fun ActivityMapBinding.askPermissions() {
         val snackBar: Snackbar
-        if (ActivityCompat.shouldShowRequestPermissionRationale(
-                this@MapActivity2,
-                ACCESS_COARSE_LOCATION
-            )
-        ) {
+        if (shouldShowRequestPermissionRationale(this@MapActivity2, ACCESS_COARSE_LOCATION)) {
             getSharedPreferences("preference_permission", MODE_PRIVATE).edit().apply {
                 putBoolean("location_permissions", false)
             }.apply()
@@ -674,7 +673,12 @@ class MapActivity2 : AppCompatActivity() {
                         ACCESS_FINE_LOCATION
                     )
                 )
-            }.setActionTextColor(ContextCompat.getColor(this@MapActivity2, R.color.button_color_center_nav))
+            }.setActionTextColor(
+                ContextCompat.getColor(
+                    this@MapActivity2,
+                    R.color.button_color_center_nav
+                )
+            )
         } else {
             val callback = object : Snackbar.Callback() {
                 override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
