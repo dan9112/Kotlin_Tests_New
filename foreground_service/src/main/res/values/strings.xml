@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Foreground Service</string>
+    <string name="notification_album_view_description">Playing track icon</string>
+    <string name="notification_prev_view_description">Button to switch to the previous track in the list</string>
+    <string name="notification_album_play_description">Button to play or pause current track</string>
+    <string name="notification_next_view_description">Button to switch to the next track in the list</string>
+
+    <string name="show_notification">Show Notification</string>
+    <string name="hide_notification">Hide Notification</string>
+</resources>
