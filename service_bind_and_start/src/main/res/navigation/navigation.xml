@@ -3,11 +3,20 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/navigation"
-    app:startDestination="@id/blankFragment">
+    app:startDestination="@id/anotherFragment">
 
     <fragment
         android:id="@+id/blankFragment"
-        android:name="ru.kamaz.service_bind_and_start.fragments.BlankFragment"
+        android:name="ru.kamaz.service_bind_and_start.presentation.ui.fragments.blank.BlankFragment"
         android:label="BlankFragment"
         tools:layout="@layout/fragment_blank"/>
+    <fragment
+        android:id="@+id/anotherFragment"
+        android:name="ru.kamaz.service_bind_and_start.presentation.ui.fragments.another.AnotherFragment"
+        android:label="fragment_another"
+        tools:layout="@layout/fragment_another" >
+        <action
+            android:id="@+id/action_anotherFragment_to_blankFragment"
+            app:destination="@id/blankFragment" />
+    </fragment>
 </navigation>

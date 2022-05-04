@@ -3,6 +3,8 @@ import org.gradle.api.JavaVersion.VERSION_11
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("kotlin-kapt")
+    id("androidx.navigation.safeargs")
 }
 
 android {
@@ -12,8 +14,8 @@ android {
         applicationId = "ru.kamaz.service_bind_and_start"
         minSdk = 24
         targetSdk = 32
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = 3
+        versionName = "2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -45,6 +47,7 @@ dependencies {
     implementation(dependencyNotation = "androidx.appcompat:appcompat:1.4.1")
     implementation(dependencyNotation = "com.google.android.material:material:1.5.0")
     implementation(dependencyNotation = "androidx.constraintlayout:constraintlayout:2.1.3")
+    implementation("androidx.legacy:legacy-support-v4:1.0.0")
 
     val navVersion ="2.4.2"
     implementation(dependencyNotation = "androidx.navigation:navigation-fragment-ktx:$navVersion")

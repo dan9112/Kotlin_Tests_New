@@ -1,7 +1,7 @@
-package ru.kamaz.service_bind_and_start.activity
+package ru.kamaz.service_bind_and_start.presentation.ui.activity
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import ru.kamaz.service_bind_and_start.R
 import ru.kamaz.service_bind_and_start.databinding.ActivityMainBinding
