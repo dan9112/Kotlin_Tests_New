@@ -13,14 +13,28 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="24dp">
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:contentDescription="@string/background_image_view_content_description"
+            android:scaleType="centerCrop"
+            android:src="@drawable/wallpaper"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/textView"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
             android:gravity="center_horizontal"
+            android:shadowColor="?attr/colorOnPrimary"
+            android:shadowRadius="2.0"
             android:text="@{bindingAdapter.text}"
             android:textColor="?attr/colorPrimary"
             android:textSize="18sp"
@@ -33,6 +47,8 @@
             android:id="@+id/deleteResult"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
             android:enabled="@{bindingAdapter.isDeleteResultButtonEnable}"
             android:text="@string/delete_result_button_text"
             app:layout_constraintBottom_toTopOf="@+id/startServiceButton"
@@ -45,6 +61,8 @@
             android:id="@+id/createNew"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
             android:enabled="@{bindingAdapter.isCreateNewButtonEnable}"
             android:text="@string/create_new_button_text"
             app:layout_constraintBottom_toBottomOf="@+id/deleteResult"
@@ -56,6 +74,8 @@
             android:id="@+id/startServiceButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
             android:onClick="@{() -> bindingAdapter.startService()}"
             android:text="Start Service"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -70,6 +90,8 @@
             android:id="@+id/stopServiceButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
             android:onClick="@{() -> bindingAdapter.stopService.invoke()}"
             android:text="Stop Service"
             app:layout_constraintBottom_toBottomOf="@id/startServiceButton"

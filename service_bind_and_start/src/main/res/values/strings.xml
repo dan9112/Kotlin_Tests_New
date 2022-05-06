@@ -8,4 +8,5 @@
     <string name="error_get_result_string">Nothing to show</string>
     <string name="delete_result_button_text">Delete Previous</string>
     <string name="create_new_button_text">Create new</string>
+    <string name="background_image_view_content_description">Background for fragment</string>
 </resources>
