@@ -3,6 +3,7 @@ package ru.kamaz.service_bind_and_start.presentation.ui.fragments.blank
 import android.content.Context
 import android.content.Intent
 import androidx.databinding.ObservableField
+import ru.kamaz.service_bind_and_start.R
 import ru.kamaz.service_bind_and_start.presentation.services.my_service.MyService
 import ru.kamaz.service_bind_and_start.presentation.services.my_service.MyService.Companion.Command.Start
 import ru.kamaz.service_bind_and_start.presentation.services.my_service.MyService.Companion.Command.Stop
@@ -16,8 +17,13 @@ class BlankFragmentBindingAdapter(
     /**
      * Актуальный контекст для использования функций ОС Android
      */
-    private val context: Context
+    private val context: Context,
+    /**
+     * viewModel фрагмента
+     */
+private val viewModel: BlankFragmentAndroidViewModel
 ) {
+    var service: MyService? = null
 
     /**
      * Запуск сервиса
@@ -42,6 +48,26 @@ class BlankFragmentBindingAdapter(
             Timber.d(message = "Tries to stop service with context: $this")
         }
     }
+
+    fun deleteResult() {
+        viewModel.deleteResult()
+        updateTvAndDrButton.invoke(null)
+    }
+
+    fun createNew() {
+        service?.doAnythingAndGetResult()
+    }
+
+    val updateTvAndDrButton: (result: Boolean?) -> Unit
+        get() = { result ->
+            if (result == null) {
+                isDeleteResultButtonEnable.set(false)
+                text.set(context.getString(R.string.error_get_result_string))
+            } else {
+                isDeleteResultButtonEnable.set(true)
+                text.set(result.toString())
+            }
+        }
 
     /**
      * Текст в текстовом окне

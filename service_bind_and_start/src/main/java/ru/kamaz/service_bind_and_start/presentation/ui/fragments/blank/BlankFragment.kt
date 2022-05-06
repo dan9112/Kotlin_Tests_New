@@ -35,16 +35,12 @@ class BlankFragment : Fragment() {
         serviceConnection = object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName, binder: IBinder) {
                 myService = (binder as MyService.MyBinder).service.apply {
+                    _bindingAdapter?.let { it.service = this }
                     result.observe(viewLifecycleOwner, serviceResultObserver)
                     isInProcess.observe(viewLifecycleOwner) { disable ->
-                        try {
-                            bindingAdapter.isCreateNewButtonEnable.set(!disable)
-                        } catch (exception: NullPointerException) {
-                            Timber.d(message = "Binding adapter is null!")
-                        }
+                        _bindingAdapter?.isCreateNewButtonEnable?.set(!disable)
                     }
                 }
-                Timber.d(message = "Service is bound")
             }
 
             override fun onServiceDisconnected(name: ComponentName) {
@@ -60,11 +56,7 @@ class BlankFragment : Fragment() {
             myService!!.stopSelf()
             viewModel.saveResult(result = result)
             Timber.d(message = "Result has been received: $result")
-            try {
-                bindingAdapter.updateTvAndDrButton.invoke(result)
-            } catch (exception: NullPointerException) {
-                Timber.d(message = "Binding adapter is null!")
-            }
+            _bindingAdapter?.updateTvAndDrButton?.invoke(result)
         }
     }
 
@@ -73,36 +65,13 @@ class BlankFragment : Fragment() {
     ) = DataBindingUtil.inflate<FragmentBlankBinding>(
         inflater, R.layout.fragment_blank, container, false
     ).run {
-        _bindingAdapter = BlankFragmentBindingAdapter(context = requireContext())
-        bindingAdapter = _bindingAdapter
-        with(receiver = createNew) {
-            isEnabled = false
-            setOnClickListener {
-                myService?.doAnythingAndGetResult()
+        bindingAdapter =
+            BlankFragmentBindingAdapter(context = requireContext(), viewModel = viewModel).apply {
+                _bindingAdapter = this
+                updateTvAndDrButton.invoke(viewModel.getResult())
             }
-        }
-        with(receiver = viewModel) {
-            with(receiver = this@BlankFragment.bindingAdapter) {
-                updateTvAndDrButton.invoke(getResult())
-                deleteResult.setOnClickListener {
-                    deleteResult()
-                    updateTvAndDrButton.invoke(null)
-                }
-            }
-        }
         root
     }
-
-    private val BlankFragmentBindingAdapter.updateTvAndDrButton: (result: Boolean?) -> Unit
-        get() = { result ->
-            if (result == null) {
-                isDeleteResultButtonEnable.set(false)
-                text.set(getString(R.string.error_get_result_string))
-            } else {
-                isDeleteResultButtonEnable.set(true)
-                text.set(result.toString())
-            }
-        }
 
     override fun onStart() {
         super.onStart()
@@ -116,7 +85,10 @@ class BlankFragment : Fragment() {
 
     override fun onStop() {
         super.onStop()
-        bindingAdapter.isCreateNewButtonEnable.set(false)
+        with(receiver = bindingAdapter) {
+            isCreateNewButtonEnable.set(false)
+            service = null
+        }
         myService = null
         requireContext().unbindService(serviceConnection)
         Timber.d(message = "Tries to unbind service")

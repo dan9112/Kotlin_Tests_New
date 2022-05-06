@@ -29,7 +29,10 @@ class MyService : Service() {
      */
     private var previousStartId: Int? = null
 
-    override fun onBind(intent: Intent) = binder
+    override fun onBind(intent: Intent) = run {
+        Timber.d(message = "Service is bound")
+        binder
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         previousStartId =
@@ -48,7 +51,10 @@ class MyService : Service() {
         return START_REDELIVER_INTENT
     }
 
-    override fun onUnbind(intent: Intent?) = false
+    override fun onUnbind(intent: Intent?) = run {
+        Timber.d(message = "Service is unbound")
+        false
+    }
 
     /**
      * Флаг задачи. Возвращает true, если задача находится в процессе выполнения.
