@@ -21,7 +21,7 @@ class BlankFragmentBindingAdapter(
     /**
      * viewModel фрагмента
      */
-private val viewModel: BlankFragmentAndroidViewModel
+    private val viewModel: BlankFragmentAndroidViewModel
 ) {
     var service: MyService? = null
 

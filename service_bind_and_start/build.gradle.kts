@@ -14,12 +14,10 @@ android {
         applicationId = "ru.kamaz.service_bind_and_start"
         minSdk = 24
         targetSdk = 32
-        versionCode = 6
-        versionName = "2.3"
+        versionCode = 7
+        versionName = "2.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        versionNameSuffix = "f"
-        applicationIdSuffix = "sbs"
     }
 
     buildTypes {
