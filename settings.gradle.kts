@@ -6,7 +6,8 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "Kotlin Tests"
-include ':app'
-include ':file_scanner'
-include ':tree_recyclerview'
-include ':diff_util'
+include (":app")
+include (":file_scanner")
+include (":tree_recyclerview")
+include (":diff_util")
+include (":foreground_service")

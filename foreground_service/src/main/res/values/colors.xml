@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="blood_red_light">#FFFF5335</color>
+    <color name="blood_red">#FFD70505</color>
+    <color name="blood_red_dark">#FF9D0000</color>
+
+    <color name="steel_blue_light">#FF7AB2E6</color>
+    <color name="steel_blue">#FF4683B4</color>
+</resources>

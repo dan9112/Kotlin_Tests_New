@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Foreground Service</string>
+    <string name="hello_fragment_0">Fragment 0</string>
+    <string name="hello_fragment_1">Fragment 1</string>
+    <string name="hello_fragment_2">Fragment 2</string>
+    <string name="hello_fragment_3">Fragment 3</string>
+    <string name="hello_fragment_4">Fragment 4</string>
+    <string name="hello_fragment_5">Fragment 5</string>
+</resources>
