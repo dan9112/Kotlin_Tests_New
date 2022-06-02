@@ -10,10 +10,11 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".Fragment0"
-        android:background="?attr/colorOnPrimary">
+        android:background="?attr/colorOnPrimary"
+        tools:context=".Fragment0">
 
         <TextView
+            style="@style/CustomTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/hello_fragment_0"
@@ -22,6 +23,30 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/button01"
+            style="@style/CustomButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
+            android:text="1"
+            app:layout_constraintBottom_toTopOf="@+id/button02"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:ignore="HardcodedText" />
+
+        <Button
+            android:id="@+id/button02"
+            style="@style/CustomButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
+            android:text="2"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:ignore="HardcodedText" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
