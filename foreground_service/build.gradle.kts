@@ -12,8 +12,8 @@ android {
         applicationId = "ru.kamaz.foreground_service"
         minSdk = 23
         targetSdk = 32
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = 3
+        versionName = "1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -42,9 +42,9 @@ android {
 
 dependencies {
 
-    implementation (dependencyNotation = "androidx.core:core-ktx:1.7.0")
-    implementation (dependencyNotation = "androidx.appcompat:appcompat:1.4.1")
-    implementation (dependencyNotation = "com.google.android.material:material:1.6.0")
+    implementation (dependencyNotation = "androidx.core:core-ktx:1.8.0")
+    implementation (dependencyNotation = "androidx.appcompat:appcompat:1.4.2")
+    implementation (dependencyNotation = "com.google.android.material:material:1.6.1")
     implementation (dependencyNotation = "androidx.constraintlayout:constraintlayout:2.1.4")
     testImplementation (dependencyNotation = "junit:junit:4.13.2")
     androidTestImplementation (dependencyNotation = "androidx.test.ext:junit:1.1.3")

@@ -12,5 +12,6 @@
 
     <style name="CustomTextView" parent="Widget.MaterialComponents.TextView">
         <item name="android:textSize">20sp</item>
+        <item name="android:textColor">?attr/colorPrimary</item>
     </style>
 </resources>

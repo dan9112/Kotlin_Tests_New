@@ -4,11 +4,13 @@
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/blood_red</item>
         <item name="colorPrimaryVariant">@color/blood_red_dark</item>
-        <item name="colorOnPrimary">@android:color/white</item>
+        <!-- Синяя Элис -->
+        <item name="colorOnPrimary">#F0F8FF</item>
         <!-- Secondary brand color. -->
         <item name="colorSecondary">@color/steel_blue</item>
         <item name="colorSecondaryVariant">@color/steel_blue_light</item>
-        <item name="colorOnSecondary">@android:color/black</item>
+        <!-- Мышьяковый -->
+        <item name="colorOnSecondary">#3B444B</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor" >?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
