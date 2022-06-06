@@ -1,8 +1,9 @@
 import org.gradle.api.JavaVersion.VERSION_11
 
 plugins {
-    id ("com.android.application")
-    id ("org.jetbrains.kotlin.android")
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("androidx.navigation.safeargs.kotlin")
 }
 
 android {
@@ -10,10 +11,10 @@ android {
 
     defaultConfig {
         applicationId = "ru.kamaz.foreground_service"
-        minSdk = 23
+        minSdk = 26
         targetSdk = 32
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 4
+        versionName = "1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -42,13 +43,13 @@ android {
 
 dependencies {
 
-    implementation (dependencyNotation = "androidx.core:core-ktx:1.8.0")
-    implementation (dependencyNotation = "androidx.appcompat:appcompat:1.4.2")
-    implementation (dependencyNotation = "com.google.android.material:material:1.6.1")
-    implementation (dependencyNotation = "androidx.constraintlayout:constraintlayout:2.1.4")
-    testImplementation (dependencyNotation = "junit:junit:4.13.2")
-    androidTestImplementation (dependencyNotation = "androidx.test.ext:junit:1.1.3")
-    androidTestImplementation (dependencyNotation = "androidx.test.espresso:espresso-core:3.4.0")
+    implementation(dependencyNotation = "androidx.core:core-ktx:1.8.0")
+    implementation(dependencyNotation = "androidx.appcompat:appcompat:1.4.2")
+    implementation(dependencyNotation = "com.google.android.material:material:1.6.1")
+    implementation(dependencyNotation = "androidx.constraintlayout:constraintlayout:2.1.4")
+    testImplementation(dependencyNotation = "junit:junit:4.13.2")
+    androidTestImplementation(dependencyNotation = "androidx.test.ext:junit:1.1.3")
+    androidTestImplementation(dependencyNotation = "androidx.test.espresso:espresso-core:3.4.0")
 
     // Navigation component
     val navVersion = "2.4.2"

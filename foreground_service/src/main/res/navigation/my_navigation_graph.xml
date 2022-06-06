@@ -13,16 +13,16 @@
         <action
             android:id="@+id/action_fragment0_to_fragment1"
             app:destination="@id/fragment1"
-            app:popUpTo="@id/fragment0"
-            app:popUpToInclusive="true" />
+            app:popUpTo="@id/fragment1"
+            app:popUpToInclusive="false" />
         <action
             android:id="@+id/action_fragment0_to_fragment2"
             app:destination="@id/fragment2"
-            app:popUpTo="@id/fragment0"
-            app:popUpToInclusive="true" />
+            app:popUpTo="@id/fragment2"
+            app:popUpToInclusive="false" />
         <action
-            android:id="@+id/action_fragment0_to_splashScreen"
-            app:destination="@id/splashScreen" />
+            android:id="@+id/action_fragment0_to_splashScreenFragment"
+            app:destination="@id/splashScreenFragment" />
     </fragment>
     <fragment
         android:id="@+id/fragment1"
@@ -86,8 +86,8 @@
             app:destination="@id/fragment2" />
     </fragment>
     <fragment
-        android:id="@+id/splashScreen"
-        android:name="ru.kamaz.foreground_service.SplashScreen"
+        android:id="@+id/splashScreenFragment"
+        android:name="ru.kamaz.foreground_service.SplashScreenFragment"
         android:label="SplashScreen"
         tools:layout="@layout/fragment_splash_screen"/>
 </navigation>
