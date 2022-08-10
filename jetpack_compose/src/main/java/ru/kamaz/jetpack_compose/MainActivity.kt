@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -12,12 +13,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Card
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import timber.log.Timber
 
 class MainActivity : ComponentActivity() {
 
@@ -35,10 +39,17 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun ListItem(name: String, description: String, num: Int) {
+    val counter = rememberSaveable {
+        mutableStateOf(value = 0)
+    }
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(all = 10.dp),
+            .padding(all = 10.dp)
+            .clickable {
+                counter.value++
+                Timber.i(message = "Number[$num] click - ${counter.value}")
+            },
         shape = RoundedCornerShape(size = 15.dp),
         elevation = 5.dp
     ) {

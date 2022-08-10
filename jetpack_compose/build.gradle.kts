@@ -15,7 +15,7 @@ android {
         minSdk = 23
         targetSdk = 32
         versionCode = 3
-        versionName = "2.1"
+        versionName = "3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -67,4 +67,7 @@ dependencies {
     androidTestImplementation(dependencyNotation = "androidx.compose.ui:ui-test-junit4:$composeVersion")
     debugImplementation(dependencyNotation = "androidx.compose.ui:ui-tooling:$composeVersion")
     debugImplementation(dependencyNotation = "androidx.compose.ui:ui-test-manifest:$composeVersion")
+
+    // Timber
+    implementation(dependencyNotation = "com.jakewharton.timber:timber:5.0.1")
 }
