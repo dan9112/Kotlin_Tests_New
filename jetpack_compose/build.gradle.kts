@@ -14,8 +14,8 @@ android {
         applicationId = "ru.kamaz.jetpack_compose"
         minSdk = 23
         targetSdk = 32
-        versionCode = 4
-        versionName = "4.0"
+        versionCode = 5
+        versionName = "5.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
