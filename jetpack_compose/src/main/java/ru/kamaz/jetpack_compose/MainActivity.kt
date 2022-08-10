@@ -5,8 +5,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Card
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -22,9 +24,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Column {
-                for (i in 0..4) {
-                    ListItem(name = "Android", description = "Operating System")
+            Column(modifier = Modifier.verticalScroll(state = rememberScrollState())) {
+                for (i in 0..24) {
+                    ListItem(name = "Android", description = "Operating System", num = i + 1)
                 }
             }
         }
@@ -32,7 +34,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun ListItem(name: String, description: String) {
+fun ListItem(name: String, description: String, num: Int) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -41,29 +43,40 @@ fun ListItem(name: String, description: String) {
         elevation = 5.dp
     ) {
         Box {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box {
-                    val modifier = Modifier
-                        .padding(all = 5.dp)
-                        .size(size = 64.dp)
-                        .clip(shape = CircleShape)
-                    val contentScale = ContentScale.Crop
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_launcher_background),
-                        contentDescription = "background",
-                        contentScale = contentScale,
-                        modifier = modifier
-                    )
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                        contentDescription = "icon",
-                        contentScale = contentScale,
-                        modifier = modifier
-                    )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box {
+                            val modifier = Modifier
+                                .padding(all = 5.dp)
+                                .size(size = 64.dp)
+                                .clip(shape = CircleShape)
+                            val contentScale = ContentScale.Crop
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_launcher_background),
+                                contentDescription = "background",
+                                contentScale = contentScale,
+                                modifier = modifier
+                            )
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                                contentDescription = "icon",
+                                contentScale = contentScale,
+                                modifier = modifier
+                            )
+                        }
+                        Column(modifier = Modifier.padding(start = 16.dp)) {
+                            Text(text = name)
+                            Text(text = description)
+                        }
+                    }
                 }
-                Column(modifier = Modifier.padding(start = 16.dp)) {
-                    Text(text = name)
-                    Text(text = description)
+                Column(modifier = Modifier.padding(all = 5.dp)) {
+                    Text(text = num.toString())
                 }
             }
         }
