@@ -14,8 +14,8 @@ android {
         applicationId = "ru.kamaz.jetpack_compose"
         minSdk = 23
         targetSdk = 32
-        versionCode = 6
-        versionName = "5.1"
+        versionCode = 7
+        versionName = "6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -70,4 +70,7 @@ dependencies {
 
     // Timber
     implementation(dependencyNotation = "com.jakewharton.timber:timber:5.0.1")
+
+    // ConstraintLayout
+    implementation(dependencyNotation = "androidx.constraintlayout:constraintlayout-compose:1.0.1")
 }
