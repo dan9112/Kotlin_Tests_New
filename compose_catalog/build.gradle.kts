@@ -14,8 +14,8 @@ android {
         applicationId = "ru.kamaz.compose_catalog"
         minSdk = 23
         targetSdk = 33
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -66,4 +66,5 @@ dependencies {
     androidTestImplementation(dependencyNotation = "androidx.compose.ui:ui-test-junit4:$composeVersion")
     debugImplementation(dependencyNotation = "androidx.compose.ui:ui-tooling:$composeVersion")
     debugImplementation(dependencyNotation = "androidx.compose.ui:ui-test-manifest:$composeVersion")
+    implementation(kotlin("reflect"))
 }
