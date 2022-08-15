@@ -1,3 +1,11 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -13,3 +21,4 @@ include (":diff_util")
 include (":rx_java")
 include (":foreground_service")
 include(":jetpack_compose")
+include(":compose_catalog")
