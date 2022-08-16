@@ -1,10 +1,12 @@
 import org.gradle.api.JavaVersion.VERSION_11
+import org.gradle.api.JavaVersion.VERSION_1_8
 
-val composeVersion = "1.2.0"
+val composeVersion = "1.2.1"
 
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    kotlin(module = "kapt")
 }
 
 android {
@@ -14,8 +16,8 @@ android {
         applicationId = "ru.kamaz.compose_catalog"
         minSdk = 23
         targetSdk = 33
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 4
+        versionName = "1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -33,7 +35,7 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = VERSION_11
+        sourceCompatibility = VERSION_1_8
         targetCompatibility = VERSION_11
     }
     kotlinOptions {
@@ -43,17 +45,17 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = composeVersion
+        kotlinCompilerExtensionVersion = "1.3.0"
     }
     packagingOptions {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    buildToolsVersion = "32.0.0"
 }
 
 dependencies {
-
     implementation(dependencyNotation = "androidx.core:core-ktx:1.8.0")
     implementation(dependencyNotation = "androidx.compose.ui:ui:$composeVersion")
     implementation(dependencyNotation = "androidx.compose.material3:material3:1.0.0-alpha16")
@@ -66,5 +68,7 @@ dependencies {
     androidTestImplementation(dependencyNotation = "androidx.compose.ui:ui-test-junit4:$composeVersion")
     debugImplementation(dependencyNotation = "androidx.compose.ui:ui-tooling:$composeVersion")
     debugImplementation(dependencyNotation = "androidx.compose.ui:ui-test-manifest:$composeVersion")
-    implementation(kotlin("reflect"))
+
+    implementation(dependencyNotation = "com.github.livefront.sealed-enum:runtime:0.5.0")
+    kapt(dependencyNotation = "com.github.livefront.sealed-enum:processor:0.5.0")
 }

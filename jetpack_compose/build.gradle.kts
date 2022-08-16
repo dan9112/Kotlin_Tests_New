@@ -1,6 +1,6 @@
 import org.gradle.api.JavaVersion.VERSION_1_8
 
-val composeVersion = "1.2.0"
+val composeVersion = "1.2.1"
 
 plugins {
     id("com.android.application")
@@ -43,7 +43,7 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = composeVersion
+        kotlinCompilerExtensionVersion = "1.3.0"
     }
     packagingOptions {
         resources {
