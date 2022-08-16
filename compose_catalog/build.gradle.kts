@@ -2,6 +2,7 @@ import org.gradle.api.JavaVersion.VERSION_11
 import org.gradle.api.JavaVersion.VERSION_1_8
 
 val composeVersion = "1.2.1"
+val koinVersion = "3.2.0"
 
 plugins {
     id("com.android.application")
@@ -16,8 +17,8 @@ android {
         applicationId = "ru.kamaz.compose_catalog"
         minSdk = 23
         targetSdk = 33
-        versionCode = 9
-        versionName = "1.8"
+        versionCode = 10
+        versionName = "1.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -71,4 +72,11 @@ dependencies {
 
     implementation(dependencyNotation = "com.github.livefront.sealed-enum:runtime:0.5.0")
     kapt(dependencyNotation = "com.github.livefront.sealed-enum:processor:0.5.0")
+
+    // Koin for Android
+    implementation (dependencyNotation = "io.insert-koin:koin-android:$koinVersion")
+
+    // Koin Test
+    testImplementation (dependencyNotation = "io.insert-koin:koin-test:$koinVersion")
+    testImplementation (dependencyNotation = "io.insert-koin:koin-test-junit4:$koinVersion")
 }

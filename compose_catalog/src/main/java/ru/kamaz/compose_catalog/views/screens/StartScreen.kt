@@ -70,8 +70,8 @@ object StartScreen : DrawerAppScreen {
                             textAlign = TextAlign.Center
                         )
                         Text(
-                            text = "1. Jetpack Compose;\n2. Kotlin Coroutines;\n3. Kotlin Flow;\n4*. " +
-                                    "View Model;\n5*. Koin.",
+                            text = "1. Jetpack Compose;\n2. Kotlin Coroutines;\n3. Kotlin Flow;\n4. " +
+                                    "View Model;\n5. Koin.",
                             textAlign = TextAlign.Start
                         )
                     }
