@@ -16,6 +16,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.tooling.preview.Preview
 import com.livefront.sealedenum.GenSealedEnum
 import kotlinx.coroutines.launch
+import ru.kamaz.compose_catalog.ui.theme.KotlinTestsTheme
 import ru.kamaz.compose_catalog.views.DrawerContentComponent
 import ru.kamaz.compose_catalog.views.screens.*
 import java.io.Serializable
@@ -24,7 +25,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            DrawerAppComponent()
+            KotlinTestsTheme {
+                DrawerAppComponent()
+            }
         }
     }
 
@@ -56,24 +59,24 @@ class MainActivity : ComponentActivity() {
 
     sealed interface DrawerAppScreen : Serializable {
         object StartScreen : DrawerAppScreen {
-            override fun toString() = "Start Screen"
+            override fun toString() = "Приветственный экран"
         }
 
         sealed interface Product : DrawerAppScreen {
             object KamAZ4310Screen : Product {
-                override fun toString() = "KamAZ-4310"
+                override fun toString() = "КамАЗ-4310"
             }
 
             object KamAZ5511Screen : Product {
-                override fun toString() = "KamAZ-5511"
+                override fun toString() = "КамАЗ-5511"
             }
 
             object KamAZ6282Screen : Product {
-                override fun toString() = "KamAZ-6282"
+                override fun toString() = "КамАЗ-6282"
             }
 
             object KamAZ6350Screen : Product {
-                override fun toString() = "KamAZ-6350"
+                override fun toString() = "КамАЗ-6350"
             }
 
             @GenSealedEnum
@@ -99,6 +102,8 @@ class MainActivity : ComponentActivity() {
     @Preview
     @Composable
     private fun DefaultPreview() {
-        DrawerAppComponent()
+        KotlinTestsTheme {
+            DrawerAppComponent()
+        }
     }
 }

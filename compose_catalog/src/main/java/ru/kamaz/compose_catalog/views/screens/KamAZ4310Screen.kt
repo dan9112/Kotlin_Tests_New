@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import ru.kamaz.compose_catalog.MainActivity
+import ru.kamaz.compose_catalog.ui.theme.KotlinTestsTheme
 
 
 // Мы представляем функцию composable, аннотируя ее аннотацией @Composable. Составные функции можно вызывать
@@ -66,5 +67,7 @@ fun KamAZ4310Screen(openDrawer: () -> Unit) {
 @Preview
 @Composable
 private fun DefaultPreview() {
-    KamAZ4310Screen(openDrawer = {})
+    KotlinTestsTheme {
+        KamAZ4310Screen(openDrawer = {})
+    }
 }

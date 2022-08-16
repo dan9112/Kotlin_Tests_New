@@ -2,17 +2,18 @@
 
 package ru.kamaz.compose_catalog.views.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
+import android.content.res.Configuration
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import ru.kamaz.compose_catalog.MainActivity
+import androidx.compose.ui.unit.dp
+import ru.kamaz.compose_catalog.ui.theme.KotlinTestsTheme
 
 
 // Мы представляем функцию composable, аннотируя ее аннотацией @Composable. Составные функции можно вызывать
@@ -28,7 +29,7 @@ fun StartScreen(openDrawer: () -> Unit) {
         SmallTopAppBar(
             // Составляемый объект Text предопределен библиотекой Compose UI; вы можете использовать
             // это составное для отображения текста на экране
-            title = { Text("${MainActivity.DrawerAppScreen.StartScreen} Title") },
+            title = { Text(text = "Приветственная страница") },
             navigationIcon = {
                 IconButton(onClick = openDrawer) {
                     Icon(imageVector = Icons.Filled.Menu, contentDescription = "Menu")
@@ -54,10 +55,23 @@ fun StartScreen(openDrawer: () -> Unit) {
             // мы настраиваем столбец так, чтобы он занимал всю доступную высоту и ширину, используя
             // Modifier.fillMaxSize().
             Column(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(all = 24.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
-                content = { Text(text = "${MainActivity.DrawerAppScreen.StartScreen} content") }
+                content = {
+                    Text(
+                        text = "Добро пожаловать в альфа-версию приложения для демонстрации " +
+                                "возможностей Material Design 3 в связке с:",
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = "1. Jetpack Compose;\n2. Kotlin Coroutines;\n3*. Kotlin Flow;\n4*. " +
+                                "View Model.",
+                        textAlign = TextAlign.Start
+                    )
+                }
             )
         }
     }
@@ -66,5 +80,7 @@ fun StartScreen(openDrawer: () -> Unit) {
 @Preview
 @Composable
 private fun DefaultPreview() {
-    StartScreen(openDrawer = {})
+    KotlinTestsTheme {
+        StartScreen(openDrawer = {})
+    }
 }

@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ru.kamaz.compose_catalog.MainActivity
+import ru.kamaz.compose_catalog.ui.theme.KotlinTestsTheme
 import ru.kamaz.compose_catalog.values
 
 @Composable
@@ -23,7 +24,7 @@ fun DrawerContentComponent(
 ) {
     ModalDrawerSheet {
         NavigationDrawerItem(
-            label = { Text(text = "Home") },
+            label = { Text(text = "КамАЗ") },
             selected = false,
             onClick = {
                 currentScreen.value = MainActivity.DrawerAppScreen.StartScreen
@@ -56,7 +57,10 @@ fun DrawerContentComponent(
 @Preview
 @Composable
 private fun DefaultPreview() {
-    DrawerContentComponent(
-        currentScreen = mutableStateOf(MainActivity.DrawerAppScreen.StartScreen),
-        closeDrawer = {})
+    KotlinTestsTheme {
+        DrawerContentComponent(
+            currentScreen = mutableStateOf(MainActivity.DrawerAppScreen.StartScreen),
+            closeDrawer = {}
+        )
+    }
 }
