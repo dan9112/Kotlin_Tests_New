@@ -11,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import ru.kamaz.compose_catalog.ui.theme.KotlinTestsPreviewTheme
-import ru.kamaz.compose_catalog.ui.theme.KotlinTestsTheme
 
 object KamAZ6350Screen : DrawerAppScreen.Product {
     override fun toString() = "КамАЗ-6350"

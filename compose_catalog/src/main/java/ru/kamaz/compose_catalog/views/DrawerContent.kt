@@ -6,13 +6,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ru.kamaz.compose_catalog.ui.theme.KotlinTestsPreviewTheme
-import ru.kamaz.compose_catalog.ui.theme.KotlinTestsTheme
 import ru.kamaz.compose_catalog.views.screens.DrawerAppScreen
 import ru.kamaz.compose_catalog.views.screens.StartScreen
 import ru.kamaz.compose_catalog.views.screens.values
@@ -20,7 +17,8 @@ import ru.kamaz.compose_catalog.views.screens.values
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DrawerContentComponent(
-    currentScreen: MutableState<DrawerAppScreen>,
+    setScreen: (DrawerAppScreen) -> Unit,
+    getScreen: () -> DrawerAppScreen,
     closeDrawer: () -> Unit
 ) {
     ModalDrawerSheet {
@@ -28,7 +26,7 @@ fun DrawerContentComponent(
             label = { Text(text = "КамАЗ") },
             selected = false,
             onClick = {
-                currentScreen.value = StartScreen
+                setScreen(StartScreen)
                 closeDrawer()
             },
             modifier = Modifier
@@ -43,9 +41,9 @@ fun DrawerContentComponent(
         for (item in DrawerAppScreen.Product.values) {
             NavigationDrawerItem(
                 label = { Text(text = item.toString()) },
-                selected = item == currentScreen,
+                selected = item == getScreen,
                 onClick = {
-                    currentScreen.value = item
+                    setScreen(item)
                     closeDrawer()
                 },
                 modifier = Modifier.padding(all = 10.dp)
@@ -60,7 +58,8 @@ fun DrawerContentComponent(
 private fun DefaultPreview() {
     KotlinTestsPreviewTheme {
         DrawerContentComponent(
-            currentScreen = mutableStateOf(StartScreen),
+            setScreen = {},
+            getScreen = { StartScreen },
             closeDrawer = {}
         )
     }

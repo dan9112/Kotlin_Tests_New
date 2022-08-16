@@ -14,7 +14,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ru.kamaz.compose_catalog.ui.theme.KotlinTestsPreviewTheme
-import ru.kamaz.compose_catalog.ui.theme.KotlinTestsTheme
 
 object StartScreen : DrawerAppScreen {
     override fun toString() = "Приветственная страница"
@@ -71,8 +70,8 @@ object StartScreen : DrawerAppScreen {
                             textAlign = TextAlign.Center
                         )
                         Text(
-                            text = "1. Jetpack Compose;\n2. Kotlin Coroutines;\n3*. Kotlin Flow;\n4*. " +
-                                    "View Model.",
+                            text = "1. Jetpack Compose;\n2. Kotlin Coroutines;\n3. Kotlin Flow;\n4*. " +
+                                    "View Model;\n5*. Koin.",
                             textAlign = TextAlign.Start
                         )
                     }
