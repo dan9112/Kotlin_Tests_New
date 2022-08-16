@@ -65,3 +65,7 @@ fun KotlinTestsTheme(
         content = content
     )
 }
+
+@Composable
+fun KotlinTestsPreviewTheme(content: @Composable () -> Unit) =
+    KotlinTestsTheme(dynamicColor = false, content = content)

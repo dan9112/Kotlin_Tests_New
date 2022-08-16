@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import ru.kamaz.compose_catalog.ui.theme.KotlinTestsPreviewTheme
 import ru.kamaz.compose_catalog.ui.theme.KotlinTestsTheme
 
 object StartScreen : DrawerAppScreen {
@@ -84,7 +85,7 @@ object StartScreen : DrawerAppScreen {
 @Preview
 @Composable
 private fun DefaultPreview() {
-    KotlinTestsTheme {
+    KotlinTestsPreviewTheme {
         StartScreen.GetView(openDrawer = {})
     }
 }

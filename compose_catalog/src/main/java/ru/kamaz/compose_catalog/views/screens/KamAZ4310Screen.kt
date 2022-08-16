@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import ru.kamaz.compose_catalog.ui.theme.KotlinTestsPreviewTheme
 import ru.kamaz.compose_catalog.ui.theme.KotlinTestsTheme
 
 object KamAZ4310Screen : DrawerAppScreen.Product {
@@ -68,7 +69,7 @@ object KamAZ4310Screen : DrawerAppScreen.Product {
 @Preview
 @Composable
 private fun DefaultPreview() {
-    KotlinTestsTheme {
+    KotlinTestsPreviewTheme {
         KamAZ4310Screen.GetView(openDrawer = {})
     }
 }

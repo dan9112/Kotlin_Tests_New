@@ -13,6 +13,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.launch
+import ru.kamaz.compose_catalog.ui.theme.KotlinTestsPreviewTheme
 import ru.kamaz.compose_catalog.ui.theme.KotlinTestsTheme
 import ru.kamaz.compose_catalog.views.DrawerContentComponent
 import ru.kamaz.compose_catalog.views.screens.DrawerAppScreen
@@ -57,7 +58,7 @@ class MainActivity : ComponentActivity() {
     @Preview
     @Composable
     private fun DefaultPreview() {
-        KotlinTestsTheme {
+        KotlinTestsPreviewTheme {
             DrawerAppComponent()
         }
     }

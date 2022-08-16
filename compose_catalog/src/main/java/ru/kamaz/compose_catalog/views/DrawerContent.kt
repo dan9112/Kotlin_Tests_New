@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import ru.kamaz.compose_catalog.ui.theme.KotlinTestsPreviewTheme
 import ru.kamaz.compose_catalog.ui.theme.KotlinTestsTheme
 import ru.kamaz.compose_catalog.views.screens.DrawerAppScreen
 import ru.kamaz.compose_catalog.views.screens.StartScreen
@@ -57,7 +58,7 @@ fun DrawerContentComponent(
 @Preview
 @Composable
 private fun DefaultPreview() {
-    KotlinTestsTheme {
+    KotlinTestsPreviewTheme {
         DrawerContentComponent(
             currentScreen = mutableStateOf(StartScreen),
             closeDrawer = {}
