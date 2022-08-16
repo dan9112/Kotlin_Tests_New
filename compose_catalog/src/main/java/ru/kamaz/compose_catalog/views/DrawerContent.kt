@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package ru.kamaz.compose_catalog.views
 
 import android.annotation.SuppressLint
@@ -13,13 +11,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import ru.kamaz.compose_catalog.MainActivity
 import ru.kamaz.compose_catalog.ui.theme.KotlinTestsTheme
-import ru.kamaz.compose_catalog.values
+import ru.kamaz.compose_catalog.views.screens.DrawerAppScreen
+import ru.kamaz.compose_catalog.views.screens.StartScreen
+import ru.kamaz.compose_catalog.views.screens.values
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DrawerContentComponent(
-    currentScreen: MutableState<MainActivity.DrawerAppScreen>,
+    currentScreen: MutableState<DrawerAppScreen>,
     closeDrawer: () -> Unit
 ) {
     ModalDrawerSheet {
@@ -27,7 +27,7 @@ fun DrawerContentComponent(
             label = { Text(text = "КамАЗ") },
             selected = false,
             onClick = {
-                currentScreen.value = MainActivity.DrawerAppScreen.StartScreen
+                currentScreen.value = StartScreen
                 closeDrawer()
             },
             modifier = Modifier
@@ -39,7 +39,7 @@ fun DrawerContentComponent(
             )
         )
         Spacer(modifier = Modifier.height(height = 12.dp))
-        for (item in MainActivity.DrawerAppScreen.Product.values) {
+        for (item in DrawerAppScreen.Product.values) {
             NavigationDrawerItem(
                 label = { Text(text = item.toString()) },
                 selected = item == currentScreen,
@@ -59,7 +59,7 @@ fun DrawerContentComponent(
 private fun DefaultPreview() {
     KotlinTestsTheme {
         DrawerContentComponent(
-            currentScreen = mutableStateOf(MainActivity.DrawerAppScreen.StartScreen),
+            currentScreen = mutableStateOf(StartScreen),
             closeDrawer = {}
         )
     }

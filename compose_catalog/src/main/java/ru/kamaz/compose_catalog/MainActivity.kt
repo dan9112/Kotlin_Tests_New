@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package ru.kamaz.compose_catalog
 
 import android.os.Bundle
@@ -14,12 +12,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.tooling.preview.Preview
-import com.livefront.sealedenum.GenSealedEnum
 import kotlinx.coroutines.launch
 import ru.kamaz.compose_catalog.ui.theme.KotlinTestsTheme
 import ru.kamaz.compose_catalog.views.DrawerContentComponent
-import ru.kamaz.compose_catalog.views.screens.*
-import java.io.Serializable
+import ru.kamaz.compose_catalog.views.screens.DrawerAppScreen
+import ru.kamaz.compose_catalog.views.screens.StartScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,13 +28,14 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun DrawerAppComponent() {
         // Состояние выдвигаемого ящика - перенести во viewModel
         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
         // Текущий активный экран - перенести во viewModel
         val currentScreen =
-            rememberSaveable { mutableStateOf<DrawerAppScreen>(DrawerAppScreen.StartScreen) }
+            rememberSaveable { mutableStateOf<DrawerAppScreen>(StartScreen) }
         // Область действия составного объекта
         val coroutineScope = rememberCoroutineScope()
 
@@ -50,53 +48,10 @@ class MainActivity : ComponentActivity() {
                     closeDrawer = { coroutineScope.launch { drawerState.close() } })
             },
             content = {
-                BodyContentComponent(
-                    currentScreen = currentScreen.value,
-                    openDrawer = { coroutineScope.launch { drawerState.open() } }
-                )
+                currentScreen.value.GetView(openDrawer = {
+                    coroutineScope.launch { drawerState.open() }
+                })
             })
-    }
-
-    sealed interface DrawerAppScreen : Serializable {
-        object StartScreen : DrawerAppScreen {
-            override fun toString() = "Приветственная страница"
-        }
-
-        sealed interface Product : DrawerAppScreen {
-            object KamAZ4310Screen : Product {
-                override fun toString() = "КамАЗ-4310"
-            }
-
-            object KamAZ5511Screen : Product {
-                override fun toString() = "КамАЗ-5511"
-            }
-
-            object KamAZ6282Screen : Product {
-                override fun toString() = "КамАЗ-6282"
-            }
-
-            object KamAZ6350Screen : Product {
-                override fun toString() = "КамАЗ-6350"
-            }
-
-            @GenSealedEnum
-            companion object
-        }
-    }
-
-    /**
-     * Передаёт соответствующий экран, компонуемый на основе текущего активного экрана.
-     */
-    @Composable
-    fun BodyContentComponent(
-        currentScreen: DrawerAppScreen,
-        openDrawer: () -> Unit
-    ) = when (currentScreen) {
-        DrawerAppScreen.StartScreen -> StartScreen(openDrawer)
-        DrawerAppScreen.Product.KamAZ4310Screen -> KamAZ4310Screen(openDrawer)
-        DrawerAppScreen.Product.KamAZ5511Screen -> KamAZ5511Screen(openDrawer)
-        DrawerAppScreen.Product.KamAZ6282Screen -> KamAZ6282Screen(openDrawer)
-        DrawerAppScreen.Product.KamAZ6350Screen -> KamAZ6350Screen(openDrawer)
     }
 
     @Preview
