@@ -59,7 +59,7 @@ class MainActivity : ComponentActivity() {
 
     sealed interface DrawerAppScreen : Serializable {
         object StartScreen : DrawerAppScreen {
-            override fun toString() = "Приветственный экран"
+            override fun toString() = "Приветственная страница"
         }
 
         sealed interface Product : DrawerAppScreen {
