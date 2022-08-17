@@ -5,7 +5,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level.DEBUG
-import ru.kamaz.compose_catalog.di.appModule
+import ru.kamaz.compose_catalog.di.AppModules.appModule
 
 class MainApplication : Application() {
     override fun onCreate() {
@@ -14,7 +14,7 @@ class MainApplication : Application() {
         startKoin {
             androidLogger(level = DEBUG)
             androidContext(androidContext = this@MainApplication)
-            modules(appModule)
+            modules(modules = appModule)
         }
     }
 }

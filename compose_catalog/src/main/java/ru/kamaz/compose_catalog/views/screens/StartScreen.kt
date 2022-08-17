@@ -71,7 +71,7 @@ object StartScreen : DrawerAppScreen {
                         )
                         Text(
                             text = "1. Jetpack Compose;\n2. Kotlin Coroutines;\n3. Kotlin Flow;\n4. " +
-                                    "View Model;\n5. Koin.",
+                                    "View Model Compose;\n5*. Koin.",
                             textAlign = TextAlign.Start
                         )
                     }

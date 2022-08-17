@@ -3,6 +3,9 @@ import org.gradle.api.JavaVersion.VERSION_1_8
 
 val composeVersion = "1.2.1"
 val koinVersion = "3.2.0"
+val lifecycleVersion = "2.5.1"
+
+val sealedEnumVersion = "0.5.0"
 
 plugins {
     id("com.android.application")
@@ -17,8 +20,8 @@ android {
         applicationId = "ru.kamaz.compose_catalog"
         minSdk = 23
         targetSdk = 33
-        versionCode = 10
-        versionName = "1.9"
+        versionCode = 11
+        versionName = "1.10"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -61,7 +64,7 @@ dependencies {
     implementation(dependencyNotation = "androidx.compose.ui:ui:$composeVersion")
     implementation(dependencyNotation = "androidx.compose.material3:material3:1.0.0-alpha16")
     implementation(dependencyNotation = "androidx.compose.ui:ui-tooling-preview:$composeVersion")
-    implementation(dependencyNotation = "androidx.lifecycle:lifecycle-runtime-ktx:2.5.1")
+    implementation(dependencyNotation = "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion")
     implementation(dependencyNotation = "androidx.activity:activity-compose:1.5.1")
     testImplementation(dependencyNotation = "junit:junit:4.13.2")
     androidTestImplementation(dependencyNotation = "androidx.test.ext:junit:1.1.3")
@@ -70,13 +73,17 @@ dependencies {
     debugImplementation(dependencyNotation = "androidx.compose.ui:ui-tooling:$composeVersion")
     debugImplementation(dependencyNotation = "androidx.compose.ui:ui-test-manifest:$composeVersion")
 
-    implementation(dependencyNotation = "com.github.livefront.sealed-enum:runtime:0.5.0")
-    kapt(dependencyNotation = "com.github.livefront.sealed-enum:processor:0.5.0")
+    // Sealed-Enum (Beta)
+    implementation(dependencyNotation = "com.github.livefront.sealed-enum:runtime:$sealedEnumVersion")
+    kapt(dependencyNotation = "com.github.livefront.sealed-enum:processor:$sealedEnumVersion")
 
     // Koin for Android
-    implementation (dependencyNotation = "io.insert-koin:koin-android:$koinVersion")
+    implementation(dependencyNotation = "io.insert-koin:koin-android:$koinVersion")
 
     // Koin Test
-    testImplementation (dependencyNotation = "io.insert-koin:koin-test:$koinVersion")
-    testImplementation (dependencyNotation = "io.insert-koin:koin-test-junit4:$koinVersion")
+    testImplementation(dependencyNotation = "io.insert-koin:koin-test:$koinVersion")
+    testImplementation(dependencyNotation = "io.insert-koin:koin-test-junit4:$koinVersion")
+
+    // ViewModel utilities for Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycleVersion")
 }

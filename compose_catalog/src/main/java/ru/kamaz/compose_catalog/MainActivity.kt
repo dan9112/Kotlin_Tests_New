@@ -12,14 +12,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.launch
-import org.koin.androidx.viewmodel.ext.android.viewModel
 import ru.kamaz.compose_catalog.ui.theme.KotlinTestsPreviewTheme
 import ru.kamaz.compose_catalog.ui.theme.KotlinTestsTheme
 import ru.kamaz.compose_catalog.views.DrawerContentComponent
+import ru.kamaz.compose_catalog.views.screens.StartScreen
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 class MainActivity : ComponentActivity() {
-    private val viewModel by viewModel<MainViewModel>()
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -31,13 +30,13 @@ class MainActivity : ComponentActivity() {
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    private fun DrawerAppComponent() {
+    private fun DrawerAppComponent(viewModel: MainViewModel = viewModel()) {
         // Состояние выдвигаемого ящика - перенести во viewModel?
         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-        // Текущий активный экран
-        val currentScreen = viewModel.currentScreen.collectAsState()
         // Область действия составного объекта
         val coroutineScope = rememberCoroutineScope()
+        // Текущий активный экран
+        val currentScreen = viewModel.currentScreen.collectAsState(initial = StartScreen)
 
         ModalNavigationDrawer(
             drawerState = drawerState,
