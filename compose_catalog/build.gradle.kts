@@ -20,8 +20,8 @@ android {
         applicationId = "ru.kamaz.compose_catalog"
         minSdk = 23
         targetSdk = 33
-        versionCode = 11
-        versionName = "1.10"
+        versionCode = 12
+        versionName = "1.11"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -85,5 +85,5 @@ dependencies {
     testImplementation(dependencyNotation = "io.insert-koin:koin-test-junit4:$koinVersion")
 
     // ViewModel utilities for Compose
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycleVersion")
+    implementation(dependencyNotation = "androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycleVersion")
 }
