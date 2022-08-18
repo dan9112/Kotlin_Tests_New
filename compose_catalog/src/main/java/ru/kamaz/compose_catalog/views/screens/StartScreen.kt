@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import ru.kamaz.compose_catalog.ui.theme.KotlinTestsPreviewTheme
 
 object StartScreen : DrawerAppScreen {
-    override fun toString() = "Приветственная страница"
+    override fun toString() = "КамАЗ"
 
     // Мы представляем функцию composable, аннотируя ее аннотацией @Composable. Составные функции можно вызывать
     // только из области действия других composable функций. Мы должны думать о composable функциях как о

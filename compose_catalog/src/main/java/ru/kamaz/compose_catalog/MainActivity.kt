@@ -14,7 +14,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.launch
 import ru.kamaz.compose_catalog.ui.theme.KotlinTestsPreviewTheme
 import ru.kamaz.compose_catalog.ui.theme.KotlinTestsTheme
-import ru.kamaz.compose_catalog.views.DrawerContentComponent
+import ru.kamaz.compose_catalog.views.DrawerContent
 import ru.kamaz.compose_catalog.views.screens.StartScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 
@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
             drawerState = drawerState,
             gesturesEnabled = true,
             drawerContent = {
-                DrawerContentComponent(
+                DrawerContent(
                     setScreen = { viewModel.setScreen(it) },
                     getScreen = { currentScreen.value }
                 ) { coroutineScope.launch { drawerState.close() } }

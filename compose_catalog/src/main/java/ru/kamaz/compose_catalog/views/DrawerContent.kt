@@ -17,34 +17,36 @@ import ru.kamaz.compose_catalog.views.screens.values
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DrawerContentComponent(
+fun DrawerContent(
     setScreen: (DrawerAppScreen) -> Unit,
     getScreen: () -> DrawerAppScreen,
     closeDrawer: () -> Unit
 ) {
     ModalDrawerSheet {
-        NavigationDrawerItem(
-            label = { Text(text = "КамАЗ") },
-            selected = false,
-            onClick = {
-                setScreen(StartScreen)
-                closeDrawer()
-            },
-            modifier = Modifier
-                .height(height = 120.dp)
-                .padding(all = 10.dp),
-            colors = NavigationDrawerItemDefaults.colors(
-                unselectedContainerColor = MaterialTheme.colorScheme.tertiary,
-                unselectedTextColor = MaterialTheme.colorScheme.onTertiary
-            )
-        )
-        Spacer(modifier = Modifier.height(height = 12.dp))
-        for (item in CarScreen.values) {
+        with(receiver = StartScreen) {
             NavigationDrawerItem(
-                label = { Text(text = item.toString()) },
-                selected = item == getScreen,
+                label = { Text(text = toString()) },
+                selected = false,
                 onClick = {
-                    setScreen(item)
+                    setScreen(this)
+                    closeDrawer()
+                },
+                modifier = Modifier
+                    .height(height = 120.dp)
+                    .padding(all = 10.dp),
+                colors = NavigationDrawerItemDefaults.colors(
+                    unselectedContainerColor = MaterialTheme.colorScheme.tertiary,
+                    unselectedTextColor = MaterialTheme.colorScheme.onTertiary
+                )
+            )
+        }
+        Spacer(modifier = Modifier.height(height = 12.dp))
+        CarScreen.values.forEach {
+            NavigationDrawerItem(
+                label = { Text(text = it.toString()) },
+                selected = it == getScreen,
+                onClick = {
+                    setScreen(it)
                     closeDrawer()
                 },
                 modifier = Modifier.padding(all = 10.dp)
@@ -58,7 +60,7 @@ fun DrawerContentComponent(
 @Composable
 private fun DefaultPreview() {
     KotlinTestsPreviewTheme {
-        DrawerContentComponent(
+        DrawerContent(
             setScreen = {},
             getScreen = { StartScreen },
             closeDrawer = {}

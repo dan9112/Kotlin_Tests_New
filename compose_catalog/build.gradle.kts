@@ -20,8 +20,8 @@ android {
         applicationId = "ru.kamaz.compose_catalog"
         minSdk = 23
         targetSdk = 33
-        versionCode = 12
-        versionName = "1.11"
+        versionCode = 13
+        versionName = "1.12"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -86,4 +86,22 @@ dependencies {
 
     // ViewModel utilities for Compose
     implementation(dependencyNotation = "androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycleVersion")
+
+    // Robolectric environment
+    testImplementation(dependencyNotation = "androidx.test:core:1.5.0-alpha01")
+    // Mockito framework
+    testImplementation(dependencyNotation = "org.mockito:mockito-core:4.7.0")
+    androidTestImplementation(dependencyNotation = "org.mockito:mockito-android:4.7.0")
+    // mockito-kotlin
+    testImplementation(dependencyNotation = "org.mockito.kotlin:mockito-kotlin:4.0.0")
+    androidTestImplementation(dependencyNotation = "org.mockito.kotlin:mockito-kotlin:4.0.0")
+    // Mockk framework
+    testImplementation(dependencyNotation = "io.mockk:mockk:1.12.5")
+
+    // Mockk framework for instrumented tests
+    androidTestImplementation(dependencyNotation = "io.mockk:mockk-android:1.12.5")
+
+    // Truth framework
+    testImplementation(dependencyNotation = "com.google.truth:truth:1.1.3")
+    androidTestImplementation(dependencyNotation = "com.google.truth:truth:1.1.3")
 }
