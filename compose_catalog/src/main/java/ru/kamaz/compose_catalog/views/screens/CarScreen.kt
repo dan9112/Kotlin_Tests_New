@@ -2,6 +2,7 @@ package ru.kamaz.compose_catalog.views.screens
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -22,8 +24,10 @@ import androidx.compose.ui.unit.dp
 import com.livefront.sealedenum.GenSealedEnum
 
 sealed class CarScreen(
+    @VisibleForTesting
     @DrawableRes
     val imageResource: Int,
+    @VisibleForTesting
     @StringRes
     val contentResource: Int
 ) : DrawerAppScreen {
@@ -83,7 +87,11 @@ sealed class CarScreen(
                         contentDescription = "image",
                         modifier = Modifier.padding(all = 20.dp)
                     )
-                    Text(text = stringResource(id = contentResource), textAlign = TextAlign.Justify)
+                    Text(
+                        text = stringResource(id = contentResource),
+                        modifier = Modifier.testTag(tag = "contentText"),
+                        textAlign = TextAlign.Justify
+                    )
                 }
             }
         }

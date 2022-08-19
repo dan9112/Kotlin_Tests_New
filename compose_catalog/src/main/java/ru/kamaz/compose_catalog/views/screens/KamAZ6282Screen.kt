@@ -9,7 +9,9 @@ object KamAZ6282Screen : CarScreen(
     imageResource = R.drawable.kamaz6282,
     contentResource = R.string.KamAZ6282_content
 ) {
-    override fun toString() = "КамАЗ-6282"
+    override fun toString() = run {
+        "КамАЗ-6282"
+    }
 }
 
 @Preview

@@ -1,5 +1,6 @@
 package ru.kamaz.compose_catalog.views
 
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.performClick
@@ -16,42 +17,42 @@ class DrawerContentTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    fun hasAllItems() = with(receiver = composeTestRule) {
+    fun existsAllItems() = with(receiver = composeTestRule) {
         // Given
         setContent {
             DrawerContent(setScreen = {}, getScreen = { StartScreen }, closeDrawer = {})
         }
 
-        // When
-        onNode(matcher = hasText(text = "КамАЗ"))
-            .assertExists(errorMessageOnFail = "Header element not found in component tree")
+        // ???
+        onNode(matcher = hasTestTag(testTag = "header"))
+            .assertExists(errorMessageOnFail = "Header element has not found in component tree")
         CarScreen.values.forEach {
-            onNode(matcher = hasText(text = it.toString()))
-                .assertExists(errorMessageOnFail = "$it not found in component tree")
+            onNode(matcher = hasTestTag(testTag = it.toString()))
+                .assertExists(errorMessageOnFail = "$it has not found in component tree")
         }
     }
 
     @Test
-    fun checkNavigationDrawerCloseAndSetScreenAfterHeaderClick() =
-        checkNavigationDrawerCloseAndSetScreenAfterItemClick(item = StartScreen)
+    fun checkCloseDrawerAndSetScreenHaveInvokedAfterHeaderClick() =
+        checkCloseDrawerAndSetScreenHaveInvokedAfterItemClick(item = StartScreen)
 
     @Test
-    fun checkNavigationDrawerCloseAndSetScreenAfterKamAZ4310Click() =
-        checkNavigationDrawerCloseAndSetScreenAfterItemClick(item = KamAZ4310Screen)
+    fun checkCloseDrawerAndSetScreenHaveInvokedAfterKamAZ4310Click() =
+        checkCloseDrawerAndSetScreenHaveInvokedAfterItemClick(item = KamAZ4310Screen)
 
     @Test
-    fun checkNavigationDrawerCloseAndSetScreenAfterKamAZ5511Click() =
-        checkNavigationDrawerCloseAndSetScreenAfterItemClick(item = KamAZ5511Screen)
+    fun checkCloseDrawerAndSetScreenHaveInvokedAfterKamAZ5511Click() =
+        checkCloseDrawerAndSetScreenHaveInvokedAfterItemClick(item = KamAZ5511Screen)
 
     @Test
-    fun checkNavigationDrawerCloseAndSetScreenAfterKamAZ6282Click() =
-        checkNavigationDrawerCloseAndSetScreenAfterItemClick(item = KamAZ6282Screen)
+    fun checkCloseDrawerAndSetScreenHaveInvokedAfterKamAZ6282Click() =
+        checkCloseDrawerAndSetScreenHaveInvokedAfterItemClick(item = KamAZ6282Screen)
 
     @Test
-    fun checkNavigationDrawerCloseAndSetScreenAfterKamAZ6350Click() =
-        checkNavigationDrawerCloseAndSetScreenAfterItemClick(item = KamAZ6350Screen)
+    fun checkCloseDrawerAndSetScreenHaveInvokedAfterKamAZ6350Click() =
+        checkCloseDrawerAndSetScreenHaveInvokedAfterItemClick(item = KamAZ6350Screen)
 
-    private fun checkNavigationDrawerCloseAndSetScreenAfterItemClick(item: DrawerAppScreen) =
+    private fun checkCloseDrawerAndSetScreenHaveInvokedAfterItemClick(item: DrawerAppScreen) =
         with(receiver = composeTestRule) {
             // Given
             var hasInvoked = false
