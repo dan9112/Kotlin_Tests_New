@@ -2,13 +2,13 @@ package ru.kamaz.compose_catalog.views
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,7 +26,9 @@ fun DrawerContent(
     getScreen: () -> DrawerAppScreen,
     closeDrawer: () -> Unit
 ) {
-    ModalDrawerSheet(modifier = Modifier.verticalScroll(rememberScrollState())) {
+    ModalDrawerSheet(modifier = Modifier
+        .fillMaxHeight()
+        .verticalScroll(rememberScrollState())) {
         with(receiver = StartScreen) {
             NavigationDrawerItem(
                 label = { Text(text = toString()) },
