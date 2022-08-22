@@ -1,7 +1,6 @@
 package ru.kamaz.compose_catalog.views
 
 import androidx.compose.ui.test.hasTestTag
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -24,9 +23,9 @@ class DrawerContentTest {
         }
 
         // ???
-        onNode(matcher = hasTestTag(testTag = "header"))
+        onNode(matcher = hasTestTag(testTag = StartScreen.toString()))
             .assertExists(errorMessageOnFail = "Header element has not found in component tree")
-        CarScreen.values.forEach {
+        DrawerAppScreen.CarScreen.values.forEach {
             onNode(matcher = hasTestTag(testTag = it.toString()))
                 .assertExists(errorMessageOnFail = "$it has not found in component tree")
         }
@@ -65,7 +64,7 @@ class DrawerContentTest {
             }
 
             // When
-            onNode(matcher = hasText(text = item.toString())).performClick()
+            onNode(matcher = hasTestTag(testTag = item.toString())).performClick()
 
             // Then
             assertThat(hasInvoked).isTrue()

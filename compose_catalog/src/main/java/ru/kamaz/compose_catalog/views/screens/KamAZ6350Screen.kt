@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import ru.kamaz.compose_catalog.R
 import ru.kamaz.compose_catalog.ui.theme.KotlinTestsPreviewTheme
+import ru.kamaz.compose_catalog.views.screens.DrawerAppScreen.CarScreen
 
 object KamAZ6350Screen : CarScreen(
     imageResource = R.drawable.kamaz6350,

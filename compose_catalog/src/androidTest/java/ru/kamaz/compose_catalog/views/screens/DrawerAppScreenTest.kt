@@ -11,12 +11,12 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class CarScreenTest {
+class DrawerAppScreenTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
     @Test
-    fun existsAllItems(): Unit = with(receiver = composeTestRule) {
+    fun carScreenExistsAllItems(): Unit = with(receiver = composeTestRule) {
         with(receiver = KamAZ6282Screen) {
             // Given
             setContent {
@@ -24,9 +24,24 @@ class CarScreenTest {
             }
 
             // ???
-            onNode(matcher = hasContentDescription(value = "Menu")).assertExists(errorMessageOnFail = "menu has not found")
-            onNode(matcher = hasTestTag(testTag = "contentText")).assertExists(errorMessageOnFail = "text has not found")
-            onNode(matcher = hasContentDescription(value = "image")).assertExists(errorMessageOnFail = "image has not found")
+            onNode(matcher = hasContentDescription(value = "Menu")).assertExists(errorMessageOnFail = "Menu has not found")
+            onNode(matcher = hasTestTag(testTag = "Content text")).assertExists(errorMessageOnFail = "Text has not found")
+            onNode(matcher = hasContentDescription(value = "Image")).assertExists(errorMessageOnFail = "Image has not found")
+        }
+    }
+
+    @Test
+    fun startScreenExistsAllItems(): Unit = with(receiver = composeTestRule) {
+        with(receiver = StartScreen) {
+            // Given
+            setContent {
+                GetView {}
+            }
+
+            // ???
+            onNode(matcher = hasContentDescription(value = "Menu")).assertExists(errorMessageOnFail = "Menu has not found")
+            onNode(matcher = hasTestTag(testTag = "Main text")).assertExists(errorMessageOnFail = "Main text has not found")
+            onNode(matcher = hasTestTag(testTag = "Numbered list")).assertExists(errorMessageOnFail = "Numbered list text has not found")
         }
     }
 

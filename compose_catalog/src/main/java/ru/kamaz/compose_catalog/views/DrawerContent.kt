@@ -11,8 +11,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ru.kamaz.compose_catalog.ui.theme.KotlinTestsPreviewTheme
-import ru.kamaz.compose_catalog.views.screens.CarScreen
 import ru.kamaz.compose_catalog.views.screens.DrawerAppScreen
+import ru.kamaz.compose_catalog.views.screens.DrawerAppScreen.CarScreen
 import ru.kamaz.compose_catalog.views.screens.StartScreen
 import ru.kamaz.compose_catalog.views.screens.values
 
@@ -35,7 +35,7 @@ fun DrawerContent(
                 modifier = Modifier
                     .height(height = 120.dp)
                     .padding(all = 10.dp)
-                    .testTag(tag = "header"),
+                    .testTag(tag = toString()),
                 colors = NavigationDrawerItemDefaults.colors(
                     unselectedContainerColor = MaterialTheme.colorScheme.tertiary,
                     unselectedTextColor = MaterialTheme.colorScheme.onTertiary
