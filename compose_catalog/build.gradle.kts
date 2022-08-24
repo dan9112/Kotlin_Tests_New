@@ -18,10 +18,10 @@ android {
 
     defaultConfig {
         applicationId = "ru.kamaz.compose_catalog"
-        minSdk = 23
+        minSdk = 24
         targetSdk = 33
-        versionCode = 18
-        versionName = "1.16 fix"
+        versionCode = 19
+        versionName = "2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -104,4 +104,7 @@ dependencies {
     // Truth framework
     testImplementation(dependencyNotation = "com.google.truth:truth:1.1.3")
     androidTestImplementation(dependencyNotation = "com.google.truth:truth:1.1.3")
+
+    // SplashScreen
+    implementation(dependencyNotation = "androidx.core:core-splashscreen:1.0.0")
 }
