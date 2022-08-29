@@ -1,4 +1,4 @@
-package ru.kamaz.rxjava_2
+package ru.kamaz.rxjava_3
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry

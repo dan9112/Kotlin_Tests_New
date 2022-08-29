@@ -1,3 +1,5 @@
+val javaVersion = JavaVersion.VERSION_1_8
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -7,11 +9,11 @@ android {
     compileSdk = 32
 
     defaultConfig {
-        applicationId = "ru.kamaz.rxjava_2"
+        applicationId = "ru.kamaz.rxjava_3"
         minSdk = 23
         targetSdk = 32
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -26,11 +28,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = javaVersion
+        targetCompatibility = javaVersion
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = javaVersion.toString()
     }
 
     buildFeatures {
