@@ -23,7 +23,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startRStream() {
-        listOf("1", "2", "3", "4", "5")
+        listOf(1, 2, 3, 4, 5)
             // Apply the toObservable() extension function
             .toObservable()
             // Construct your Observer using the subscribeBy() extension function
