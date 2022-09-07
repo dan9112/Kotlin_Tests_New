@@ -1,4 +1,4 @@
-package ru.kamaz.matrix
+package ru.kamaz.matrix.ui.second_fragment
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import ru.kamaz.matrix.R
 import ru.kamaz.matrix.databinding.FragmentSecondBinding
 
 /**

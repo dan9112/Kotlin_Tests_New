@@ -10,9 +10,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.KotlinTests">
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.root_activity.RootActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.KotlinTests">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

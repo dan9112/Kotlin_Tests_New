@@ -1,4 +1,6 @@
-package ru.kamaz.matrix.models
+package ru.kamaz.matrix.models.templates
+
+import ru.kamaz.matrix.models.core.Matrix
 
 open class MatrixNestedLists<E>(
     final override val height: Int,

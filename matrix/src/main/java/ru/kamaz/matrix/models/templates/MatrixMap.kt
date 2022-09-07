@@ -1,4 +1,7 @@
-package ru.kamaz.matrix.models
+package ru.kamaz.matrix.models.templates
+
+import ru.kamaz.matrix.models.core.Cell
+import ru.kamaz.matrix.models.core.Matrix
 
 open class MatrixMap<E>(
     final override val height: Int,
