@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 val javaVersion = JavaVersion.VERSION_1_8
 
 plugins {
@@ -6,12 +8,12 @@ plugins {
 }
 
 android {
-    compileSdk = 32
+    compileSdk = 33
 
     defaultConfig {
         applicationId = "ru.kamaz.rxjava_3"
         minSdk = 23
-        targetSdk = 32
+        targetSdk = 33
         versionCode = 4
         versionName = "2"
 
@@ -42,8 +44,8 @@ android {
 
 dependencies {
 
-    implementation(dependencyNotation = "androidx.core:core-ktx:1.8.0")
-    implementation(dependencyNotation = "androidx.appcompat:appcompat:1.5.0")
+    implementation(dependencyNotation = "androidx.core:core-ktx:1.9.0")
+    implementation(dependencyNotation = "androidx.appcompat:appcompat:1.5.1")
     implementation(dependencyNotation = "com.google.android.material:material:1.6.1")
     implementation(dependencyNotation = "androidx.constraintlayout:constraintlayout:2.1.4")
     testImplementation(dependencyNotation = "junit:junit:4.13.2")

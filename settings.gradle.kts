@@ -1,3 +1,12 @@
+@file:Suppress("UnstableApiUsage")
+
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -6,9 +15,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "Kotlin Tests"
-include (":app")
-include (":file_scanner")
-include (":tree_recyclerview")
-include (":diff_util")
-include (":foreground_service")
-include(":rxjava_3")
+include(":app", ":diff_util", ":file_scanner", ":foreground_service", ":rxjava_3", ":tree_recyclerview")

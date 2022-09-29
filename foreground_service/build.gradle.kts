@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 import org.gradle.api.JavaVersion.VERSION_11
 
 plugins {
@@ -7,12 +9,12 @@ plugins {
 }
 
 android {
-    compileSdk = 32
+    compileSdk = 33
 
     defaultConfig {
         applicationId = "ru.kamaz.foreground_service"
         minSdk = 26
-        targetSdk = 32
+        targetSdk = 33
         versionCode = 4
         versionName = "1.3"
 
@@ -43,8 +45,8 @@ android {
 
 dependencies {
 
-    implementation(dependencyNotation = "androidx.core:core-ktx:1.8.0")
-    implementation(dependencyNotation = "androidx.appcompat:appcompat:1.4.2")
+    implementation(dependencyNotation = "androidx.core:core-ktx:1.9.0")
+    implementation(dependencyNotation = "androidx.appcompat:appcompat:1.5.1")
     implementation(dependencyNotation = "com.google.android.material:material:1.6.1")
     implementation(dependencyNotation = "androidx.constraintlayout:constraintlayout:2.1.4")
     testImplementation(dependencyNotation = "junit:junit:4.13.2")
