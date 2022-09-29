@@ -14,8 +14,8 @@ android {
         applicationId = "ru.kamaz.rxjava_3"
         minSdk = 23
         targetSdk = 33
-        versionCode = 4
-        versionName = "2"
+        versionCode = 5
+        versionName = "2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -54,4 +54,7 @@ dependencies {
 
     implementation(dependencyNotation = "io.reactivex.rxjava3:rxkotlin:3.0.1")
     implementation(dependencyNotation = "com.jakewharton.rxbinding:rxbinding:0.4.0")
+
+    implementation("com.jakewharton.timber:timber:5.0.1")
+
 }
