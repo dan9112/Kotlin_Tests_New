@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Пример MVP</string>
+    <string name="button_text">Следующая мудрость</string>
+</resources>
