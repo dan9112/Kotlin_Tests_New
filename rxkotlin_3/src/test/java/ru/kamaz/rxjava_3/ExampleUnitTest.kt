@@ -1,4 +1,4 @@
-package ru.kamaz.rxjava_3
+package ru.kamaz.rxkotlin_3
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

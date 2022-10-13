@@ -6,11 +6,12 @@ plugins {
 
 android {
     compileSdk 33
+    namespace "lord.kotlin.file_scanner"
 
     defaultConfig {
-        applicationId "lord.kotlin.file_scanner"
+        applicationId namespace
         minSdk 24
-        targetSdk 33
+        targetSdk compileSdk
         versionCode 9
         versionName "5.0"
 

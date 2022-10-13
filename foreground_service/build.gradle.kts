@@ -10,11 +10,12 @@ plugins {
 
 android {
     compileSdk = 33
+    namespace = "ru.kamaz.foreground_service"
 
     defaultConfig {
-        applicationId = "ru.kamaz.foreground_service"
+        applicationId = namespace
         minSdk = 26
-        targetSdk = 33
+        targetSdk = compileSdk
         versionCode = 4
         versionName = "1.3"
 

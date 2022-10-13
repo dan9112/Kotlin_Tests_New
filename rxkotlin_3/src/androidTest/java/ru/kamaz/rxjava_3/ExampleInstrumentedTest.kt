@@ -1,4 +1,4 @@
-package ru.kamaz.rxjava_3
+package ru.kamaz.rxkotlin_3
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -17,6 +17,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("ru.kamaz.rxjava_2", appContext.packageName)
+        assertEquals("ru.kamaz.rxkotlin_3", appContext.packageName)
     }
 }

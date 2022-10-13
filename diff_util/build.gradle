@@ -5,11 +5,12 @@ plugins {
 
 android {
     compileSdk 33
+    namespace "ru.kamaz.diff_util"
 
     defaultConfig {
-        applicationId "ru.kamaz.diff_util"
+        applicationId namespace
         minSdk 24
-        targetSdk 33
+        targetSdk compileSdk
         versionCode 1
         versionName "1.0"
 

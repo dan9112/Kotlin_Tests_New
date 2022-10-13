@@ -1,15 +1,14 @@
-package ru.kamaz.rxjava_3
+package ru.kamaz.rxkotlin_3
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.databinding.DataBindingUtil.setContentView
 import com.jakewharton.rxbinding.view.RxView.clicks
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Observable.just
 import io.reactivex.rxjava3.core.Observable.range
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.subscribeBy
-import ru.kamaz.rxjava_3.databinding.ActivityMainBinding
+import ru.kamaz.rxkotlin_3.databinding.ActivityMainBinding.inflate
 import timber.log.Timber.Forest.i
 import java.util.concurrent.TimeUnit
 
@@ -20,7 +19,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        with(receiver = setContentView<ActivityMainBinding>(this, R.layout.activity_main)) {
+        with(receiver = inflate(layoutInflater)) {
+            setContentView(root)
             clicks(buttonStart).subscribe {
                 startRStream(++num)
             }
