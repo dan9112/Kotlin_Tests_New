@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 import org.gradle.api.JavaVersion.VERSION_11
 
 plugins {
@@ -7,12 +9,13 @@ plugins {
 }
 
 android {
-    compileSdk = 32
+    compileSdk = 33
+    namespace = "ru.kamaz.foreground_service"
 
     defaultConfig {
-        applicationId = "ru.kamaz.foreground_service"
+        applicationId = namespace
         minSdk = 26
-        targetSdk = 32
+        targetSdk = compileSdk
         versionCode = 4
         versionName = "1.3"
 
@@ -43,18 +46,21 @@ android {
 
 dependencies {
 
-    implementation(dependencyNotation = "androidx.core:core-ktx:1.8.0")
-    implementation(dependencyNotation = "androidx.appcompat:appcompat:1.4.2")
-    implementation(dependencyNotation = "com.google.android.material:material:1.6.1")
-    implementation(dependencyNotation = "androidx.constraintlayout:constraintlayout:2.1.4")
-    testImplementation(dependencyNotation = "junit:junit:4.13.2")
-    androidTestImplementation(dependencyNotation = "androidx.test.ext:junit:1.1.3")
-    androidTestImplementation(dependencyNotation = "androidx.test.espresso:espresso-core:3.4.0")
+    implementation("androidx.core:core-ktx:1.9.0")
+    implementation("androidx.appcompat:appcompat:1.5.1")
+    implementation("com.google.android.material:material:1.7.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test.ext:junit:1.1.3")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
+
+    // ViewModel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1")
 
     // Navigation component
     val navVersion = "2.4.2"
-    implementation(dependencyNotation = "androidx.navigation:navigation-fragment-ktx:$navVersion")
-    implementation(dependencyNotation = "androidx.navigation:navigation-ui-ktx:$navVersion")
+    implementation("androidx.navigation:navigation-fragment-ktx:$navVersion")
+    implementation("androidx.navigation:navigation-ui-ktx:$navVersion")
     // Feature module Support
-    implementation(dependencyNotation = "androidx.navigation:navigation-dynamic-features-fragment:$navVersion")
+    implementation("androidx.navigation:navigation-dynamic-features-fragment:$navVersion")
 }

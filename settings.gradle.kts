@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 pluginManagement {
     repositories {
         gradlePluginPortal()
@@ -15,11 +17,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "Kotlin Tests"
-include (":app")
-include (":file_scanner")
-include (":tree_recyclerview")
-include (":diff_util")
-include (":rx_java")
-include (":foreground_service")
-include(":jetpack_compose")
-include(":compose_catalog")
+include (":app", ":compose_catalog", ":diff_util", ":file_scanner", ":foreground_service", ":jetpack_compose", ":tree_recyclerview")
