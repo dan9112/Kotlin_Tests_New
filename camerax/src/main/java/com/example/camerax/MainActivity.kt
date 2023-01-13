@@ -1,11 +1,14 @@
 package com.example.camerax
 
 import android.Manifest.permission.CAMERA
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -31,33 +34,28 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var cameraExecutor: ExecutorService
 
-    private var paused = false
-
     private var imageByteArray: ByteArray? = null
+
+    private var toSettings: Boolean? = true
+    private var launchAfterRationale = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        when {
-            ContextCompat.checkSelfPermission(
-                this, CAMERA
-            ) == PackageManager.PERMISSION_GRANTED -> {
-                startCamera()
-            }
-
-            shouldShowRequestPermissionRationale(CAMERA) -> {
-                Log.i(TAG, "Rationale...")
-                requestPermissionLauncher.launch(CAMERA)
-            }
-
-            else -> {
-                requestPermissionLauncher.launch(CAMERA)
-            }
+        savedInstanceState?.let {
+            imageByteArray = it.getByteArray(keyImageByteArray)
+            toSettings = if (it.containsKey(keyToSettingsFlag)) it.getBoolean(keyToSettingsFlag, true) else null
+            launchAfterRationale = it.getBoolean(keyPermissionAskTwiceFlag, false)
         }
+
+        if (ContextCompat.checkSelfPermission(
+                this, CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+        ) startWork()
+        else requestPermissionLauncher.launch(CAMERA)
 
         viewBinding = ActivityMainBinding.inflate(layoutInflater).apply {
             setContentView(root)
-            imageByteArray = savedInstanceState?.getByteArray("imageByteArray")?.also {
+            imageByteArray?.also {
                 checkView.setImageBitmap(it.toImageBitmap())
             }
 
@@ -69,21 +67,73 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun ByteArray.toImageBitmap(): Bitmap {
-        val rotation = ByteBuffer.allocate(Int.SIZE_BYTES).getInt(0)
-        val matrix = Matrix().apply { postRotate(rotation.toFloat()) }
-        return with(BitmapFactory.decodeByteArray(this, Int.SIZE_BYTES, size - Int.SIZE_BYTES)) {
-            Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
+    override fun onResume() {
+        super.onResume()
+        if (toSettings == null) {
+            toSettings = false
+        } else if (toSettings == false) {
+            if (ContextCompat.checkSelfPermission(
+                    this, CAMERA
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                notGrantedAction()
+                toSettings = true
+            } else {
+                startWork()
+            }
         }
     }
+
+    private fun startWork() {
+        toSettings = true
+        launchAfterRationale = false
+        startCamera()
+    }
+
+    private fun ByteArray.toImageBitmap() =
+        with(BitmapFactory.decodeByteArray(this, Int.SIZE_BYTES, size - Int.SIZE_BYTES)) {
+            val rotation = ByteBuffer.wrap(this@toImageBitmap, 0, Int.SIZE_BYTES).int
+            val matrix = Matrix().apply { postRotate(rotation.toFloat()) }
+            Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
+        }
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
-        if (isGranted) startCamera()
-        else if (paused) notGrantedAction()
+        if (isGranted) startWork()
+        else askPermission()
     }
 
+    private fun askPermission() {
+        when {
+            shouldShowRequestPermissionRationale(CAMERA) -> {
+                Log.i(TAG, "Rationale...")
+                if (!launchAfterRationale) {
+                    launchAfterRationale = true
+                    requestPermissionLauncher.launch(CAMERA)
+                } else {
+                    notGrantedAction()
+                }
+            }
+
+            toSettings == true -> {
+                Log.i(TAG, "Rationale with action...")
+                startActivity(
+                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        data = Uri.fromParts("package", packageName, null)
+                    }
+                )
+                toSettings = null
+            }
+
+            else -> {
+                notGrantedAction()
+            }
+        }
+    }
+
+    @Synchronized
     private fun notGrantedAction() {
         Toast
             .makeText(this, "Permissions had not grant by the user.", Toast.LENGTH_SHORT)
@@ -158,15 +208,12 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    override fun onPause() {
-        super.onPause()
-        paused = true
-    }
-
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(
             outState.apply {
-                imageByteArray?.let { putByteArray("imageByteArray", imageByteArray) }
+                imageByteArray?.let { putByteArray(keyImageByteArray, it) }
+                toSettings?.let { putBoolean(keyToSettingsFlag, it) }
+                putBoolean(keyPermissionAskTwiceFlag, launchAfterRationale)
             }
         )
     }
@@ -174,5 +221,11 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         cameraExecutor.shutdown()
+    }
+
+    companion object {
+        private const val keyImageByteArray = "Key_0"
+        private const val keyToSettingsFlag = "Key_1"
+        private const val keyPermissionAskTwiceFlag = "Key_2"
     }
 }
