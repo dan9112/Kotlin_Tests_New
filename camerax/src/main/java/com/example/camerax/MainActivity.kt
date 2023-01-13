@@ -18,10 +18,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import com.example.camerax.databinding.ActivityMainBinding
-import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
-import java.text.SimpleDateFormat
-import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -72,7 +69,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun ByteArray.toImageBitmap() = BitmapFactory.decodeByteArray(this, 0, size)
+    private fun ByteArray.toImageBitmap(): Bitmap {
+        val rotation = ByteBuffer.allocate(Int.SIZE_BYTES).getInt(0)
+        val matrix = Matrix().apply { postRotate(rotation.toFloat()) }
+        return with(BitmapFactory.decodeByteArray(this, Int.SIZE_BYTES, size - Int.SIZE_BYTES)) {
+            Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
+        }
+    }
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -94,30 +97,21 @@ class MainActivity : AppCompatActivity() {
 
         imageCapture.takePicture(
             ContextCompat.getMainExecutor(this), object : OnImageCapturedCallback() {
-                private fun Bitmap.toCorrectRotation(rotation: Int): Bitmap {
-                    val matrix = Matrix().apply { postRotate(rotation.toFloat()) }
-                    return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
-                }
-
-                private fun ByteBuffer.toByteArray(): ByteArray {
+                private fun ByteBuffer.toByteArray(rotation: Int): ByteArray {
+                    val rotationBytes = ByteBuffer.allocate(Int.SIZE_BYTES).putInt(rotation).array()
 
                     rewind()    // Rewind the buffer to zero
                     val data = ByteArray(remaining())
                     get(data)   // Copy the buffer into a byte array
-                    return data // Return the byte array
+
+                    return rotationBytes + data // Return the byte array
                 }
 
                 override fun onCaptureSuccess(image: ImageProxy) {
                     super.onCaptureSuccess(image)
                     val buffer = image.planes[0].buffer
-
-                    val byteArray = buffer.toByteArray()
-                    var bitmap = byteArray.toImageBitmap()
-                    bitmap = bitmap.toCorrectRotation(image.imageInfo.rotationDegrees)
-                    val stream = ByteArrayOutputStream()
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
-                    imageByteArray = stream.toByteArray().also {
-                        viewBinding.checkView.setImageBitmap(bitmap)
+                    imageByteArray = buffer.toByteArray(image.imageInfo.rotationDegrees).apply {
+                        viewBinding.checkView.setImageBitmap(toImageBitmap())
                     }
                 }
             }
