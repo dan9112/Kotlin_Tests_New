@@ -1,4 +1,5 @@
 @file:Suppress("UnstableApiUsage")
+
 pluginManagement {
     repositories {
         gradlePluginPortal()
@@ -6,13 +7,14 @@ pluginManagement {
         mavenCentral()
     }
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
+        maven(url = "https://jitpack.io")
     }
 }
 rootProject.name = "Kotlin Tests"
-include(":mvp_example")
-include(":app", ":diff_util", ":file_scanner", ":foreground_service", ":rxkotlin_3", ":tree_recyclerview")
+include (":app", ":camerax", ":compose_catalog", ":diff_util", ":file_scanner", ":foreground_service", ":jetpack_compose", ":mvp_example", ":tree_recyclerview")
