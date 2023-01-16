@@ -17,4 +17,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "Kotlin Tests"
-include (":app", ":camerax", ":compose_catalog", ":diff_util", ":file_scanner", ":foreground_service", ":jetpack_compose", ":mvp_example", ":tree_recyclerview")
+include (":app", ":camerax", ":diff_util", ":file_scanner", ":foreground_service", ":mvp_example", ":tree_recyclerview")

@@ -13,11 +13,8 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageCapture
+import androidx.camera.core.*
 import androidx.camera.core.ImageCapture.OnImageCapturedCallback
-import androidx.camera.core.ImageProxy
-import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import com.example.camerax.databinding.ActivityMainBinding
@@ -56,7 +53,7 @@ class MainActivity : AppCompatActivity() {
         viewBinding = ActivityMainBinding.inflate(layoutInflater).apply {
             setContentView(root)
             imageByteArray?.also {
-                checkView.setImageBitmap(it.toImageBitmap())
+                checkView.setImageBitmap(it.toBitmap())
             }
 
             // Set up the listeners for take photo and video capture buttons
@@ -90,9 +87,9 @@ class MainActivity : AppCompatActivity() {
         startCamera()
     }
 
-    private fun ByteArray.toImageBitmap() =
+    private fun ByteArray.toBitmap() =
         with(BitmapFactory.decodeByteArray(this, Int.SIZE_BYTES, size - Int.SIZE_BYTES)) {
-            val rotation = ByteBuffer.wrap(this@toImageBitmap, 0, Int.SIZE_BYTES).int
+            val rotation = ByteBuffer.wrap(this@toBitmap, 0, Int.SIZE_BYTES).int
             val matrix = Matrix().apply { postRotate(rotation.toFloat()) }
             Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
         }
@@ -161,7 +158,7 @@ class MainActivity : AppCompatActivity() {
                     super.onCaptureSuccess(image)
                     val buffer = image.planes[0].buffer
                     imageByteArray = buffer.toByteArray(image.imageInfo.rotationDegrees).apply {
-                        viewBinding.checkView.setImageBitmap(toImageBitmap())
+                        viewBinding.checkView.setImageBitmap(toBitmap())
                     }
                 }
             }
