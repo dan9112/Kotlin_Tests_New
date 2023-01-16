@@ -15,8 +15,8 @@ android {
         applicationId = "com.example.camerax"
         minSdk = 23
         targetSdk = compileSdk
-        versionCode = 5
-        versionName = "1.3"
+        versionCode = 6
+        versionName = "1.3.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -144,12 +144,17 @@ class MainActivity : AppCompatActivity() {
         val imageCapture = imageCapture ?: return
 
         imageCapture.takePicture(
-            ContextCompat.getMainExecutor(this), object : OnImageCapturedCallback() {
+            cameraExecutor,
+            object : OnImageCapturedCallback() {
                 override fun onCaptureSuccess(image: ImageProxy) {
                     super.onCaptureSuccess(image)
                     val buffer = image.planes[0].buffer
                     imageByteArray = (image.imageInfo.rotationDegrees.toByteArray() + buffer.toByteArray()).apply {
-                        viewBinding.checkView.setImageBitmap(toRotatedBitmap())
+                        image.close()
+                        val bitmap = toRotatedBitmap()
+                        runOnUiThread {
+                            viewBinding.checkView.setImageBitmap(bitmap)
+                        }
                     }
                 }
             }
@@ -286,10 +291,9 @@ class MainActivity : AppCompatActivity() {
             fun ByteArray.toRotatedBitmap(): Bitmap =
                 with(copyOfRange(Int.SIZE_BYTES, size - Int.SIZE_BYTES).toBitmap()) {
                     val rotation = copyOfRange(0, Int.SIZE_BYTES).toInt()
-                    val matrix = Matrix().apply { postRotate(rotation.toFloat()) }
+                    val matrix = Matrix().apply { setRotate(rotation.toFloat()) }
                     Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
                 }
         }
     }
-
 }
