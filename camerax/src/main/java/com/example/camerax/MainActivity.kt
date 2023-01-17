@@ -1,29 +1,37 @@
 package com.example.camerax
 
 import android.Manifest.permission.CAMERA
+import android.content.ContentValues
 import android.content.Intent
-import android.content.pm.PackageManager
+import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
-import android.view.View.GONE
-import android.view.View.VISIBLE
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
 import androidx.camera.core.ImageCapture.OnImageCapturedCallback
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.video.*
+import androidx.camera.video.VideoCapture
+import androidx.camera.video.VideoRecordEvent.Finalize
+import androidx.camera.video.VideoRecordEvent.Start
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import com.example.camerax.MainActivity.Companion.BytesConverter.toByteArray
 import com.example.camerax.MainActivity.Companion.BytesConverter.toRotatedBitmap
 import com.example.camerax.databinding.ActivityMainBinding
 import java.nio.ByteBuffer
 import java.text.DecimalFormat
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -37,6 +45,9 @@ class MainActivity : AppCompatActivity() {
 
     private var imageCapture: ImageCapture? = null
 
+    private var videoCapture: VideoCapture<Recorder>? = null
+    private var recording: Recording? = null
+
     private lateinit var cameraExecutor: ExecutorService
 
     private var imageByteArray: ByteArray? = null
@@ -44,29 +55,41 @@ class MainActivity : AppCompatActivity() {
     private var toSettings: Boolean? = true
     private var launchAfterRationale = false
 
+    private var photoAction = true
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         savedInstanceState?.let {
             imageByteArray = it.getByteArray(keyImageByteArray)
             toSettings = if (it.containsKey(keyToSettingsFlag)) it.getBoolean(keyToSettingsFlag, true) else null
             launchAfterRationale = it.getBoolean(keyPermissionAskTwiceFlag, false)
         }
 
-        if (ContextCompat.checkSelfPermission(
-                this, CAMERA
-            ) == PackageManager.PERMISSION_GRANTED
-        ) startWork()
-        else requestPermissionLauncher.launch(CAMERA)
-
         viewBinding = ActivityMainBinding.inflate(layoutInflater).apply {
+            if (ContextCompat.checkSelfPermission(
+                    this@MainActivity, CAMERA
+                ) == PERMISSION_GRANTED
+            ) startWork()
+            else requestPermissionLauncher.launch(CAMERA)
             setContentView(root)
             imageByteArray?.also {
                 checkView.setImageBitmap(it.toRotatedBitmap())
+                imageViewContainer.isVisible = true
             }
 
             // Set up the listeners for take photo and video capture buttons
-            imageCaptureButton.setOnClickListener { takePhoto() }
-            videoCaptureButton.setOnClickListener { captureVideo() }
+            mainButton.setOnClickListener {
+                if (photoAction) takePhoto()
+                else captureVideo()
+            }
+            mainButton.setOnLongClickListener {
+                photoAction = !photoAction
+                mainButton.text = getString(if (photoAction) R.string.take_photo else R.string.start_capture)
+                if (luminosity.isVisible) luminosity.isVisible = false
+                startWork()
+                true
+            }
 
             cameraExecutor = Executors.newSingleThreadExecutor()
         }
@@ -79,7 +102,7 @@ class MainActivity : AppCompatActivity() {
         } else if (toSettings == false) {
             if (ContextCompat.checkSelfPermission(
                     this, CAMERA
-                ) != PackageManager.PERMISSION_GRANTED
+                ) != PERMISSION_GRANTED
             ) {
                 notGrantedAction()
                 toSettings = true
@@ -153,7 +176,10 @@ class MainActivity : AppCompatActivity() {
                         image.close()
                         val bitmap = toRotatedBitmap()
                         runOnUiThread {
-                            viewBinding.checkView.setImageBitmap(bitmap)
+                            with(viewBinding) {
+                                checkView.setImageBitmap(bitmap)
+                                imageViewContainer.isVisible = true
+                            }
                         }
                     }
                 }
@@ -161,11 +187,80 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private fun captureVideo() {}
+    private fun captureVideo() {
+        val videoCapture = videoCapture ?: return
+
+        viewBinding.mainButton.isEnabled = false
+
+        val curRecording = recording
+        curRecording?.let {
+            it.stop()
+            recording = null
+            return
+        }
+
+        // create and start a new recording session
+        val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
+            .format(System.currentTimeMillis())
+        val contentValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, name)
+            put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
+                put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/CameraX-Video")
+            }
+        }
+
+        val mediaStoreOutputOptions = MediaStoreOutputOptions
+            .Builder(contentResolver, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+            .setContentValues(contentValues)
+            .build()
+        recording = videoCapture
+            .output
+            .prepareRecording(this, mediaStoreOutputOptions)
+            .start(cameraExecutor) { recordEvent ->
+                when (recordEvent) {
+                    is Start -> {
+                        runOnUiThread {
+                            with(viewBinding.mainButton) {
+                                text = getString(R.string.stop_capture)
+                                isEnabled = true
+                            }
+                        }
+                    }
+
+                    is Finalize -> {
+                        if (!recordEvent.hasError()) {
+                            val msg = "Video capture succeeded: " +
+                                    "${recordEvent.outputResults.outputUri}"
+                            runOnUiThread {
+                                Toast
+                                    .makeText(baseContext, msg, Toast.LENGTH_SHORT)
+                                    .show()
+                            }
+                            Log.d(TAG, msg)
+                        } else {
+                            recording?.close()
+                            recording = null
+                            Log.e(
+                                TAG, "Video capture ends with error: " +
+                                        "${recordEvent.error}"
+                            )
+                        }
+                        runOnUiThread {
+                            with(viewBinding.mainButton) {
+                                text = getString(R.string.start_capture)
+                                isEnabled = true
+                            }
+                        }
+                    }
+                }
+            }
+    }
+
+
 
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
-
         cameraProviderFuture.addListener(
             {
                 // Used to bind the lifecycle of cameras to the lifecycle owner
@@ -179,29 +274,20 @@ class MainActivity : AppCompatActivity() {
                         setSurfaceProvider(viewBinding.viewFinder.surfaceProvider)
                     }
 
+                val recorder = Recorder
+                    .Builder()
+                    .setQualitySelector(
+                        QualitySelector.from(
+                            Quality.HIGHEST,
+                            FallbackStrategy.higherQualityOrLowerThan(Quality.SD)
+                        )
+                    )
+                    .build()
+                videoCapture = VideoCapture.withOutput(recorder)
+
                 imageCapture = ImageCapture
                     .Builder()
                     .build()
-
-                val imageAnalyzer = ImageAnalysis
-                    .Builder()
-                    .build()
-                    .also {
-                        it.setAnalyzer(
-                            cameraExecutor,
-                            LuminosityAnalyzer { luma ->
-                                runOnUiThread {
-                                    with(viewBinding.luminosity) {
-                                        if (visibility == GONE) visibility = VISIBLE
-                                        text = getString(
-                                            R.string.luminosity_output,
-                                            luma.format(3)
-                                        )
-                                    }
-                                }
-                            }
-                        )
-                    }
 
                 // Select back camera as a default
                 val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
@@ -212,12 +298,34 @@ class MainActivity : AppCompatActivity() {
                         unbindAll()
 
                         // Bind use cases to camera
-                        bindToLifecycle(this@MainActivity, cameraSelector, preview, imageCapture, imageAnalyzer)
+                        if (photoAction) {
+                            val imageAnalyzer = ImageAnalysis
+                                .Builder()
+                                .build()
+                                .also {
+                                    it.setAnalyzer(
+                                        cameraExecutor,
+                                        LuminosityAnalyzer { luma ->
+                                            runOnUiThread {
+                                                with(viewBinding.luminosity) {
+                                                    if (!isVisible) isVisible = true
+                                                    text = getString(
+                                                        R.string.luminosity_output,
+                                                        luma.format(3)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    )
+                                }
+                            bindToLifecycle(this@MainActivity, cameraSelector, preview, imageCapture, imageAnalyzer)
+                        } else {
+                            bindToLifecycle(this@MainActivity, cameraSelector, preview, videoCapture)
+                        }
                     }
                 } catch (exc: Exception) {
                     Log.e(TAG, "Use case binding failed", exc)
                 }
-
             },
             ContextCompat.getMainExecutor(this)
         )
@@ -252,13 +360,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
+        private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
+
         private const val keyImageByteArray = "Key_0"
         private const val keyToSettingsFlag = "Key_1"
         private const val keyPermissionAskTwiceFlag = "Key_2"
         private fun Double.format(afterDots: Int): String {
             val string = DecimalFormat("#.###").format(this).format(3)
             return with(string) {
-                val delimiter = when {
+                val delimiter = when {// Не нашёл как получить от системы
                     contains(',') -> ","
                     contains('.') -> "."
                     else -> with((this@format + 0.1).toString()) {
