@@ -17,7 +17,6 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
-import androidx.camera.core.ImageCapture.OnImageCapturedCallback
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.*
 import androidx.camera.video.VideoCapture
@@ -26,7 +25,6 @@ import androidx.camera.video.VideoRecordEvent.Start
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import com.example.camerax.MainActivity.Companion.BytesConverter.toByteArray
-import com.example.camerax.MainActivity.Companion.BytesConverter.toRotatedBitmap
 import com.example.camerax.databinding.ActivityMainBinding
 import java.nio.ByteBuffer
 import java.text.DecimalFormat
@@ -50,7 +48,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var cameraExecutor: ExecutorService
 
-    private var imageByteArray: ByteArray? = null
+    private var imageUri: Uri? = null
 
     private var toSettings: Boolean? = true
     private var launchAfterRationale = false
@@ -61,7 +59,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         savedInstanceState?.let {
-            imageByteArray = it.getByteArray(keyImageByteArray)
+            imageUri = it.getString(keyImageUri)?.let { uriString -> Uri.parse(uriString) }
             toSettings = if (it.containsKey(keyToSettingsFlag)) it.getBoolean(keyToSettingsFlag, true) else null
             launchAfterRationale = it.getBoolean(keyPermissionAskTwiceFlag, false)
         }
@@ -73,9 +71,8 @@ class MainActivity : AppCompatActivity() {
             ) startWork()
             else requestPermissionLauncher.launch(CAMERA)
             setContentView(root)
-            imageByteArray?.also {
-                checkView.setImageBitmap(it.toRotatedBitmap())
-                imageViewContainer.isVisible = true
+            imageUri?.also {
+                showImage()
             }
 
             // Set up the listeners for take photo and video capture buttons
@@ -84,9 +81,10 @@ class MainActivity : AppCompatActivity() {
                 else captureVideo()
             }
             mainButton.setOnLongClickListener {
+                cameraExecutor.shutdown()
+                cameraExecutor = Executors.newSingleThreadExecutor()
                 photoAction = !photoAction
                 mainButton.text = getString(if (photoAction) R.string.take_photo else R.string.start_capture)
-                if (luminosity.isVisible) luminosity.isVisible = false
                 startWork()
                 true
             }
@@ -166,7 +164,7 @@ class MainActivity : AppCompatActivity() {
         // Get a stable reference of the modifiable image capture use case
         val imageCapture = imageCapture ?: return
 
-        imageCapture.takePicture(
+        /*imageCapture.takePicture(
             cameraExecutor,
             object : OnImageCapturedCallback() {
                 override fun onCaptureSuccess(image: ImageProxy) {
@@ -184,7 +182,74 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+        )*/
+
+        // Create time stamped name and MediaStore entry.
+        val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
+            .format(System.currentTimeMillis())
+        val contentValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, name)
+            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
+                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/CameraX-Image")
+            }
+        }
+
+        // Create output options object which contains file + metadata
+        val outputOptions = ImageCapture.OutputFileOptions
+            .Builder(
+                contentResolver,
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                contentValues
+            )
+            .build()
+
+        // Set up image capture listener, which is triggered after photo has
+        // been taken
+        imageCapture.takePicture(
+            outputOptions,
+            ContextCompat.getMainExecutor(this),
+            object : ImageCapture.OnImageSavedCallback {
+                override fun onError(exc: ImageCaptureException) {
+                    Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
+                }
+
+                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                    with(output) {
+                        val msg = "Photo capture succeeded: $savedUri"
+                        imageUri = savedUri
+                        viewBinding.showImage()
+                        Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
+                        Log.d(TAG, msg)
+                    }
+                }
+            }
         )
+    }
+
+    private fun ActivityMainBinding.showImage() {
+        imageUri?.let {
+            /* try {
+                 val fileName = it.lastPathSegment!!
+                 val exifInterface = ExifInterface(fileName)
+                 val rotate = when (exifInterface.getAttributeInt(TAG_ORIENTATION, ORIENTATION_NORMAL)) {
+                     ExifInterface.ORIENTATION_ROTATE_270 -> 270
+                     ExifInterface.ORIENTATION_ROTATE_180 -> 180
+                     ExifInterface.ORIENTATION_ROTATE_90 -> 90
+                     else -> 0
+                 }*/
+
+            with(checkView) {
+                setImageURI(it)
+                /*
+                                        rotation = rotate.toFloat()
+                */
+            }
+            imageViewContainer.isVisible = true/*
+                } catch (e: IOException) {
+                    Toast.makeText(this@MainActivity, "No file by saved URI!", Toast.LENGTH_SHORT).show()
+                }*/
+        }
     }
 
     private fun captureVideo() {
@@ -258,7 +323,6 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
         cameraProviderFuture.addListener(
@@ -303,23 +367,24 @@ class MainActivity : AppCompatActivity() {
                                 .Builder()
                                 .build()
                                 .also {
-                                    it.setAnalyzer(
-                                        cameraExecutor,
-                                        LuminosityAnalyzer { luma ->
-                                            runOnUiThread {
-                                                with(viewBinding.luminosity) {
-                                                    if (!isVisible) isVisible = true
-                                                    text = getString(
+                                    with(viewBinding) {
+                                        luminosity.isVisible = true
+                                        it.setAnalyzer(
+                                            cameraExecutor,
+                                            LuminosityAnalyzer { luma ->
+                                                runOnUiThread {
+                                                    luminosity.text = getString(
                                                         R.string.luminosity_output,
                                                         luma.format(3)
                                                     )
                                                 }
                                             }
-                                        }
-                                    )
+                                        )
+                                    }
                                 }
                             bindToLifecycle(this@MainActivity, cameraSelector, preview, imageCapture, imageAnalyzer)
                         } else {
+                            viewBinding.luminosity.isVisible = false
                             bindToLifecycle(this@MainActivity, cameraSelector, preview, videoCapture)
                         }
                     }
@@ -334,7 +399,7 @@ class MainActivity : AppCompatActivity() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(
             outState.apply {
-                imageByteArray?.let { putByteArray(keyImageByteArray, it) }
+                imageUri?.let { putString(keyImageUri, it.toString()) }
                 toSettings?.let { putBoolean(keyToSettingsFlag, it) }
                 putBoolean(keyPermissionAskTwiceFlag, launchAfterRationale)
             }
@@ -362,7 +427,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
 
-        private const val keyImageByteArray = "Key_0"
+        private const val keyImageUri = "Key_0"
         private const val keyToSettingsFlag = "Key_1"
         private const val keyPermissionAskTwiceFlag = "Key_2"
         private fun Double.format(afterDots: Int): String {
