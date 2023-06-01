@@ -8,7 +8,7 @@ import android.net.Uri
 import android.text.TextUtils
 import android.util.Log
 
-const val LOG_TAG = "myLogs"
+private const val LOG_TAG = "myLogs"
 
 class MyContactsProvider : ContentProvider() {
     private lateinit var dbHelper: DBHelper
@@ -173,10 +173,10 @@ class MyContactsProvider : ContentProvider() {
 
         // Типы данных
         // набор строк
-        const val CONTACT_CONTENT_TYPE = ("vnd.android.cursor.dir/vnd.$AUTHORITY.$CONTACT_PATH")
+        const val CONTACT_CONTENT_TYPE = "vnd.android.cursor.dir/vnd.$AUTHORITY.$CONTACT_PATH"
 
         // одна строка
-        const val CONTACT_CONTENT_ITEM_TYPE = ("vnd.android.cursor.item/vnd.$AUTHORITY.$CONTACT_PATH")
+        const val CONTACT_CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.$AUTHORITY.$CONTACT_PATH"
 
         //// UriMatcher
         // общий Uri

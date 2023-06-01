@@ -1,4 +1,4 @@
-package io.reactivex.rxjava3.custom
+package io.reactivex.rxjava3.custom.Observable
 
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.observers.DisposableObserver
