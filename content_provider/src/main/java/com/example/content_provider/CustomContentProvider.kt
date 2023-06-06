@@ -6,9 +6,11 @@ import android.content.ContentValues
 import android.content.UriMatcher
 import android.database.Cursor
 import android.net.Uri
+import android.os.ParcelFileDescriptor
 import android.text.TextUtils
 import android.util.Log
 import androidx.room.*
+import java.io.*
 
 private const val LOG_TAG = "myLogs"
 
@@ -28,28 +30,22 @@ class CustomContentProvider : ContentProvider() {
         uri: Uri, projection: Array<String>?, selection: String?,
         selectionArgs: Array<String>?, sortOrder: String?
     ): Cursor {
-        var selection = selection
         var sortOrder = sortOrder
         return when (URI_MATCHER.match(uri)) {
             URI_EMPLOYEES -> {
                 Log.d(LOG_TAG, "URI_EMPLOYEES")
                 // если сортировка не указана, ставим свою - по id
                 if (TextUtils.isEmpty(sortOrder)) sortOrder = "_id ASC"
-                Log.w(LOG_TAG, "$uri\t$projection\t$selection\t$selectionArgs\t$sortOrder")
+                Log.v(LOG_TAG, "$uri\t$projection\t$selection\t$selectionArgs\t$sortOrder")
                 employeeDao.getAll(sortOrder!!)
             }
 
             URI_EMPLOYEES_ID -> {
                 val id = uri.lastPathSegment!!.toLong()
                 Log.d(LOG_TAG, "URI_EMPLOYEES_ID, $id")
-                // добавляем ID к условию выборки
-                selection = if (TextUtils.isEmpty(selection)) "_id = $id"
-                else "${
-                    selection!!
-                        .split("?")
-                        .zip(selectionArgs!!) { selectionPart, selectionArg -> selectionPart + selectionArg }
-                } AND _id = $id"
-                employeeDao.getById(id, selection)
+                employeeDao.getById(id).apply {
+                    Log.v(LOG_TAG, count.toString())
+                }
             }
 
             else -> throw IllegalArgumentException("Wrong URI: $uri")
@@ -68,6 +64,14 @@ class CustomContentProvider : ContentProvider() {
         }
     }
 
+    override fun getStreamTypes(uri: Uri, mimeTypeFilter: String): Array<String>? {
+        Log.d(LOG_TAG, "getStreamType, $uri")
+        return when (URI_STREAM_MATCHER.match(uri)) {
+            URI_EMPLOYEES_ID -> arrayOf("text/plain")
+            else -> null
+        }
+    }
+
     override fun insert(uri: Uri, values: ContentValues?): Uri {
         Log.d(LOG_TAG, "insert, $uri")
         require(URI_MATCHER.match(uri) == URI_EMPLOYEES) { "Wrong URI: $uri" }
@@ -75,8 +79,7 @@ class CustomContentProvider : ContentProvider() {
             values?.let {
                 Employee(
                     name = it.getAsString("name") ?: "",
-                    salary = it.getAsInteger("salary") ?: 0,
-                    imageUri = it.getAsString("imageUri") ?: ""
+                    salary = it.getAsInteger("salary") ?: 0
                 )
             } ?: Employee()
         )
@@ -84,6 +87,36 @@ class CustomContentProvider : ContentProvider() {
         // уведомляем ContentResolver, что данные по адресу resultUri изменились
         context!!.contentResolver.notifyChange(resultUri, null)
         return resultUri
+    }
+
+    @Throws(FileNotFoundException::class)
+    override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor? {
+        val root = context!!.filesDir
+//        val cacheDir = context!!.cacheDir
+
+        val inputPath = uri.encodedPath!!
+        val lastSlashIndex = inputPath.lastIndexOf('/')
+        val directoryPath = inputPath.substring(0, lastSlashIndex)
+        val fileName = inputPath.substring(lastSlashIndex + 1)
+        Log.v(LOG_TAG, uri.toString())
+
+        val path = File(root, directoryPath)
+        path.mkdirs()
+        val file = File(path, fileName)
+        var imode = 0
+        if (mode.contains("w")) {
+            imode = imode or ParcelFileDescriptor.MODE_WRITE_ONLY
+            if (!file.exists()) {
+                try {
+                    file.createNewFile()
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                }
+            }
+        }
+        if (mode.contains("r")) imode = imode or ParcelFileDescriptor.MODE_READ_ONLY
+        if (mode.contains("+")) imode = imode or ParcelFileDescriptor.MODE_APPEND
+        return ParcelFileDescriptor.open(file, imode)
     }
 
     override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?): Int {
@@ -101,7 +134,7 @@ class CustomContentProvider : ContentProvider() {
 
                 var name: String? = null
                 var salary: Int? = null
-                var imageUri: String? = null
+                var docPath: String? = null
 
                 selection
                     ?.split("?")
@@ -111,11 +144,11 @@ class CustomContentProvider : ContentProvider() {
                             selectionPart.matches(Regex(pattern = ".* ?salary ?= ?")) -> salary =
                                 selectionArg.toInt()
 
-                            selectionPart.matches(Regex(pattern = ".* ?imageUri ?= ?")) -> imageUri = selectionArg
+                            selectionPart.matches(Regex(pattern = ".* ?docPath ?= ?")) -> docPath = selectionArg
                         }
                         selectionPart + selectionArg
                     }
-                cnt = employeeDao.delete(id, name, salary, imageUri)
+                cnt = employeeDao.delete(id, name, salary, docPath)
 
             }
 
@@ -137,12 +170,12 @@ class CustomContentProvider : ContentProvider() {
 
                 val name = values?.getAsString("name")
                 val salary = values?.getAsInteger("salary")
-                val imageUri = values?.getAsString("imageUri")
+                val docPath = values?.getAsString("docPath")
 
-                Log.d(LOG_TAG, "id: $id\tname: $name\tsalary: $salary\timageUri: $imageUri")
+                Log.d(LOG_TAG, "id: $id\tname: $name\tsalary: $salary\tdocPath: $docPath")
 
-                cnt = if (name == null && salary == null && imageUri == null) 0
-                else employeeDao.update(id, name, salary, imageUri)
+                cnt = if (name == null && salary == null && docPath == null) 0
+                else employeeDao.update(id, name, salary, docPath)
             }
 
             else -> throw IllegalArgumentException("Wrong URI: $uri")
@@ -168,6 +201,10 @@ class CustomContentProvider : ContentProvider() {
             addURI(AUTHORITY, EMPLOYEES_PATH, URI_EMPLOYEES)
             addURI(AUTHORITY, "$EMPLOYEES_PATH/#", URI_EMPLOYEES_ID)
         }
+
+        private val URI_STREAM_MATCHER = UriMatcher(UriMatcher.NO_MATCH).apply {
+            addURI(AUTHORITY, "$EMPLOYEES_PATH/#", URI_EMPLOYEES_ID)
+        }
     }
 }
 
@@ -176,7 +213,7 @@ class CustomContentProvider : ContentProvider() {
 data class Employee(
     var name: String = "",
     var salary: Int = 0,
-    var imageUri: String = ""
+    var docPath: String = ""
 ) {
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "_id")
@@ -188,8 +225,8 @@ interface EmployeeDao {
     @Query("SELECT * FROM employee ORDER BY :sortOrder")
     fun getAll(sortOrder: String): Cursor
 
-    @Query("SELECT * FROM employee WHERE _id = :id AND :selection")
-    fun getById(id: Long, selection: String): Cursor
+    @Query("SELECT * FROM employee WHERE _id = :id")
+    fun getById(id: Long): Cursor
 
     @Insert
     fun insert(employee: Employee): Long
@@ -198,18 +235,18 @@ interface EmployeeDao {
         "UPDATE employee " +
                 "SET name = CASE WHEN :name IS NULL THEN name ELSE :name END, " +
                 "salary = CASE WHEN :salary IS NULL THEN salary ELSE :salary END, " +
-                "imageUri = CASE WHEN :imageUri IS NULL THEN imageUri ELSE :imageUri END " +
+                "docPath = CASE WHEN :docPath IS NULL THEN docPath ELSE :docPath END " +
                 "WHERE _id = :id"
     )
-    fun update(id: Long, name: String? = null, salary: Int? = null, imageUri: String? = null): Int
+    fun update(id: Long, name: String? = null, salary: Int? = null, docPath: String? = null): Int
 
     @Query(
         "DELETE FROM employee WHERE (:id IS NULL OR _id LIKE :id) " +
                 "AND (:name IS NULL OR name LIKE :name) " +
                 "AND (:salary IS NULL OR salary LIKE :salary) " +
-                "AND (:imageUri IS NULL OR imageUri LIKE :imageUri)"
+                "AND (:docPath IS NULL OR docPath LIKE :docPath)"
     )
-    fun delete(id: Long? = null, name: String? = null, salary: Int? = null, imageUri: String? = null): Int
+    fun delete(id: Long? = null, name: String? = null, salary: Int? = null, docPath: String? = null): Int
 
     @Query("DELETE FROM employee")
     fun delete(): Int
