@@ -5,50 +5,43 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".MainActivity"
-    >
+    tools:context=".MainActivity">
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        >
+        android:layout_height="wrap_content">
 
         <Button
             android:id="@+id/btnInsert"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:onClick="onClickInsert"
-            android:text="@string/insert"
-            />
+            android:layout_weight="1"
+            android:text="@string/insert" />
 
         <Button
             android:id="@+id/btnUpdate"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:onClick="onClickUpdate"
-            android:text="@string/update"
-            />
+            android:layout_weight="1"
+            android:text="@string/update" />
 
         <Button
             android:id="@+id/btnDelete"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:onClick="onClickDelete"
-            android:text="@string/delete"
-            />
+            android:layout_weight="1"
+            android:text="@string/delete" />
 
         <Button
             android:id="@+id/btnError"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:onClick="onClickError"
-            android:text="@string/error"
-            />
+            android:layout_weight="1"
+            android:text="@string/error" />
     </androidx.appcompat.widget.LinearLayoutCompat>
 
-    <ListView
-        android:id="@+id/lvContact"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/employeesList"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        />
+        android:layout_height="match_parent" />
 </androidx.appcompat.widget.LinearLayoutCompat>
