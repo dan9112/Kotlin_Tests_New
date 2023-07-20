@@ -22,6 +22,7 @@ include(
     ":diff_util",
     ":file_scanner",
     ":foreground_service",
+    ":material3_tests",
     ":rxkotlin_3",
     ":simple_app_for_content_provider_test",
     ":tree_recyclerview"

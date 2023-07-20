@@ -39,18 +39,17 @@ class MainActivity : AppCompatActivity() {
             finish()
         }
 
-        mainAdapter = RecyclerViewAdapter(
-            cursor,
-            this
-        )
+        mainAdapter = RecyclerViewAdapter(cursor, this)
         with(receiver = binding.employeesList) {
             layoutManager = LinearLayoutManager(this@MainActivity, RecyclerView.VERTICAL, false)
             adapter = mainAdapter
         }
-        binding.btnInsert.setOnClickListener { onClickInsert() }
-        binding.btnUpdate.setOnClickListener { onClickUpdate() }
-        binding.btnDelete.setOnClickListener { onClickDelete() }
-        binding.btnError.setOnClickListener { onClickError() }
+        with(receiver = binding) {
+            btnInsert.setOnClickListener { onClickInsert() }
+            btnUpdate.setOnClickListener { onClickUpdate() }
+            btnDelete.setOnClickListener { onClickDelete() }
+            btnError.setOnClickListener { onClickError() }
+        }
     }
 
     private fun getAll() = contentResolver.query(EMPOYEE_URI, null, null, null, null)
