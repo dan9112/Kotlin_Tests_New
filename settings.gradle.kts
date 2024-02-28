@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Kotlin Tests"
 include(":foreground_app")
+include(":background_app")
