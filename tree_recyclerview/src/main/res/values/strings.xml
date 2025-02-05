@@ -1,4 +1,0 @@
-<resources>
-    <string name="app_name">Tree RecyclerView</string>
-    <string name="list_item_content_description">Отображает картинку рядом с элементом</string>
-</resources>
