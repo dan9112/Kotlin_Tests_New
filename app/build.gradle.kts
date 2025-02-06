@@ -3,7 +3,8 @@ plugins {
     alias(notation = libs.plugins.org.jetbrains.kotlin.android)
     alias(notation = libs.plugins.compose.compiler)
     alias(notation = libs.plugins.sqldelight)
-    alias(notation = libs.plugins.kotlin.parcelize)
+//    alias(notation = libs.plugins.kotlin.parcelize)
+    alias(notation = libs.plugins.kotlin.serialization)
 }
 
 kotlin {
@@ -18,8 +19,8 @@ android {
         applicationId = "lord.markus.app"
         minSdk = 24
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 4
+        versionName = "1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -69,6 +70,12 @@ dependencies {
     implementation(dependencyNotation = libs.android.driver)
 
     implementation(dependencyNotation = libs.kotlinx.datetime)
+
+    implementation(dependencyNotation = libs.okhttp)
+
+    implementation(dependencyNotation = libs.androidx.lifecycle.viewmodel.compose)
+
+    implementation(dependencyNotation = libs.kotlinx.serialization.json)
 }
 
 sqldelight {

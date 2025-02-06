@@ -1,7 +1,6 @@
 package lord.markus.app
 
 import android.os.Bundle
-import android.os.Parcelable
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -41,17 +40,15 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -64,6 +61,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
@@ -73,7 +71,7 @@ import kotlinx.datetime.format
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import kotlinx.datetime.format.byUnicodePattern
 import kotlinx.datetime.toLocalDateTime
-import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
 import lord.markus.app.ui.theme.KotlinTestsTheme
 import java.lang.System.currentTimeMillis
 
@@ -277,47 +275,40 @@ inline fun AuthInterface(modifier: Modifier = Modifier, crossinline logIn: (Long
     )
 }
 
-@Parcelize
-private data class Message(
+@Serializable
+internal data class Message(
     val id: Long,
     val producer: Long,
     val time: Long,
     val message: String,
-    val state: MessageState = MessageState.Default
-) : Parcelable
+//    val state: MessageState = MessageState.Default
+)
 
-sealed interface MessageState : Parcelable {
-    @Parcelize
+/*sealed interface MessageState {
     data object Default : MessageState
 
-    @Parcelize
     data object Sending : MessageState
 
-    @Parcelize
     data object Sent : MessageState
 
-    /*@Parcelize
     data object Received : MessageState
 
-    @Parcelize
-    data object Seen : MessageState*/
+    data object Seen : MessageState
 
     sealed interface Error : MessageState {
-        @Parcelize
         data object NoInternet : Error
     }
-}
+}*/
 
 @OptIn(FormatStringsInDatetimeFormats::class)
 @Composable
-fun ChatInterface(
+internal fun ChatInterface(
     myId: Long,
     modifier: Modifier = Modifier,
-    coroutineScope: CoroutineScope = rememberCoroutineScope()
+    coroutineScope: CoroutineScope = rememberCoroutineScope(),
+    viewModel: MyViewModel = viewModel()
 ) {
-    val messages = rememberSaveable(
-        saver = listSaver(save = { it.toList() }, restore = { it.toMutableStateList() })
-    ) { mutableStateListOf<Message>() }
+    val messages by viewModel.messages.collectAsState()
 
     val actualId by remember {
         derivedStateOf {
@@ -326,10 +317,10 @@ fun ChatInterface(
     }
 
     DisposableEffect(Unit) {
-
+        viewModel.openWebSocket()
 
         onDispose {
-
+            viewModel.closeWebSocket(reason = "Screen was disposed")
         }
     }
 
@@ -431,14 +422,14 @@ fun ChatInterface(
         var currentMessage by rememberSaveable { mutableStateOf(value = "") }
 
         val onSend by rememberUpdatedState {
-            messages.add(
-                Message(
-                    id = actualId,
-                    producer = myId,
-                    time = currentTimeMillis(),
-                    message = currentMessage
-                )
+            Message(
+                id = actualId,
+                producer = myId,
+                time = currentTimeMillis(),
+                message = currentMessage
             )
+//                .also(messages::add)
+                .also(viewModel::sendMessage)
             currentMessage = ""
         }
 
@@ -447,8 +438,7 @@ fun ChatInterface(
             onValueChange = { currentMessage = it },
             modifier = Modifier
                 .fillMaxWidth()
-                .wrapContentHeight()
-                .background(color = Color.Magenta),
+                .wrapContentHeight(),
             textStyle = MaterialTheme.typography.titleMedium,
             placeholder = {
                 Text(

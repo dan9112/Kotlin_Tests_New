@@ -59,17 +59,17 @@ fun KotlinTestsTheme(
             val window = (view.context as Activity).window
             /*if (SDK_INT < VANILLA_ICE_CREAM) {
                 @Suppress("DEPRECATION")
-                window.statusBarColor = colorScheme.primary.toArgb()
+                window.statusBarColor = Color.Transparent.toArgb()
             } else {
                 window.decorView.setOnApplyWindowInsetsListener { view, insets ->
                     val statusBarInsets = insets.getInsets(WindowInsets.Type.statusBars())
-                    view.setBackgroundColor(colorScheme.primary.toArgb())
+                    view.setBackgroundColor(Color.Transparent.toArgb())
 
                     view.setPadding(0, statusBarInsets.top, 0, 0)
                     insets
                 }
             }*/
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = darkTheme
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }
 
