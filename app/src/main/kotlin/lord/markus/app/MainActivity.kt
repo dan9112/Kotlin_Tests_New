@@ -1,6 +1,13 @@
 package lord.markus.app
 
+import android.app.Service
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
+import android.os.Binder
 import android.os.Bundle
+import android.os.IBinder
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -28,21 +35,29 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisallowComposableCalls
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -53,6 +68,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -61,7 +77,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
@@ -99,35 +115,112 @@ class MainActivity : AppCompatActivity() {
                         contentScale = ContentScale.None
                     )
 
+                    val snackBarHostState = remember{ SnackbarHostState() }
+
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
+                        snackbarHost = {
+                            SnackbarHost(hostState = snackBarHostState) {
+                                val connecting = it.visuals.message == "Connecting..."
+                                Snackbar(
+                                    snackbarData = it,
+                                    shape = RoundedCornerShape(size = 8.dp),
+                                    containerColor = MaterialTheme.colorScheme.run { if (connecting) primaryContainer else errorContainer },
+                                    contentColor = MaterialTheme.colorScheme.run { if (connecting) onPrimaryContainer else onErrorContainer },
+                                    actionColor = MaterialTheme.colorScheme.error,
+                                    actionContentColor = MaterialTheme.colorScheme.onError
+                                )
+                            }
+                        },
                         containerColor = Color.Transparent
                     ) { innerPadding ->
-
                         var myId by rememberSaveable { mutableStateOf<Long?>(value = null) }
+
                         myId?.let { currentId ->
                             var backTriggered by rememberSaveable { mutableStateOf(value = false) }
+
+                            val context = LocalContext.current
+                            LaunchedEffect(Unit) {
+                                val intent = Intent(context, WebSocketService::class.java)
+                                context.startService(intent)
+                            }
 
                             BackHandler {
                                 backTriggered = !backTriggered
                             }
 
-                            ChatInterface(
-                                myId = currentId,
+                            val logOut: () -> Unit = {
+                                myId = null
+                                context.stopService(
+                                    Intent(context, WebSocketService::class.java)
+                                )
+                            }
+
+                            val boundService =
+                                rememberBoundLocalService<WebSocketService, WebSocketService.WebSocketServiceBinder> { service }
+
+                            boundService?.let { currentServiceInfo ->
+                                currentServiceInfo.service?.let { service ->
+                                    ChatInterface(
+                                        myId = currentId,
+                                        webSocketService = service,
+                                        snackBarHostState = snackBarHostState,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(paddingValues = innerPadding)
+                                    )
+
+                                    if (backTriggered) {
+                                        LogOutDialog(
+                                            currentId = currentId,
+                                            resetDialog = { backTriggered = false },
+                                            logOut = logOut
+                                        )
+                                    }
+                                } ?: Dialog(
+                                    onDismissRequest = logOut,
+                                    properties = DialogProperties(dismissOnClickOutside = false)
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .background(
+                                                color = MaterialTheme.colorScheme.errorContainer,
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                            .padding(all = 8.dp),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            text = "Service Error!",
+                                            color = MaterialTheme.colorScheme.error,
+                                            style = MaterialTheme.typography.titleMedium
+                                        )
+                                        Text(
+                                            text = "Web socket service was not bound! Do you want log out?",
+                                            color = MaterialTheme.colorScheme.onErrorContainer,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                        TextButton(onClick = logOut) {
+                                            Text(
+                                                text = "Yes",
+                                                color = MaterialTheme.colorScheme.error,
+                                                style = MaterialTheme.typography.titleMedium
+                                            )
+                                        }
+                                    }
+                                }
+                            } ?: Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(innerPadding)
-                            )
-
-                            if (backTriggered) LogOutDialog(
-                                currentId = currentId,
-                                resetDialog = { backTriggered = false },
-                                logOut = { myId = null }
-                            )
+                                    .padding(paddingValues = innerPadding)
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                            }
                         } ?: AuthInterface(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(innerPadding)
+                                .padding(paddingValues = innerPadding)
                         ) { myId = it }
                     }
                 }
@@ -166,7 +259,7 @@ private fun LogOutDialog(currentId: Long, resetDialog: () -> Unit, logOut: () ->
                 TextButton(onClick = resetDialog) {
                     Text(
                         text = "Cancel",
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
@@ -174,21 +267,13 @@ private fun LogOutDialog(currentId: Long, resetDialog: () -> Unit, logOut: () ->
                 TextButton(onClick = logOut) {
                     Text(
                         text = "Continue",
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
             }
         }
     }
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
 
 @Composable
 inline fun AuthInterface(modifier: Modifier = Modifier, crossinline logIn: (Long) -> Unit) = Column(
@@ -281,46 +366,72 @@ internal data class Message(
     val producer: Long,
     val time: Long,
     val message: String,
-//    val state: MessageState = MessageState.Default
 )
 
-/*sealed interface MessageState {
-    data object Default : MessageState
+data class BoundService<T : Service>(val service: T?)
 
-    data object Sending : MessageState
-
-    data object Sent : MessageState
-
-    data object Received : MessageState
-
-    data object Seen : MessageState
-
-    sealed interface Error : MessageState {
-        data object NoInternet : Error
+@Composable
+inline fun <reified BoundService : Service, reified BoundServiceBinder : Binder> rememberBoundLocalService(
+    crossinline getService: @DisallowComposableCalls BoundServiceBinder.() -> BoundService,
+): lord.markus.app.BoundService<BoundService>? {
+    val context = LocalContext.current
+    var boundService: lord.markus.app.BoundService<BoundService>? by remember(context) {
+        mutableStateOf(
+            value = null
+        )
     }
-}*/
+    val serviceConnection = remember(context) {
+        object : ServiceConnection {
+            override fun onServiceConnected(className: ComponentName, service: IBinder) {
+                boundService = BoundService((service as BoundServiceBinder).getService())
+            }
+
+            override fun onServiceDisconnected(arg0: ComponentName) {
+                boundService = BoundService(service = null)
+            }
+        }
+    }
+    DisposableEffect(context, serviceConnection) {
+        context.bindService(
+            Intent(context, BoundService::class.java),
+            serviceConnection,
+            Context.BIND_AUTO_CREATE
+        )
+        onDispose { context.unbindService(serviceConnection) }
+    }
+    return boundService
+}
+
 
 @OptIn(FormatStringsInDatetimeFormats::class)
 @Composable
 internal fun ChatInterface(
     myId: Long,
+    webSocketService: WebSocketService,
+    snackBarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
-    coroutineScope: CoroutineScope = rememberCoroutineScope(),
-    viewModel: MyViewModel = viewModel()
+    coroutineScope: CoroutineScope = rememberCoroutineScope()
 ) {
-    val messages by viewModel.messages.collectAsState()
+    val messages by webSocketService.messages.collectAsState()
+
+    val errorMessage by webSocketService.errorMessage.collectAsState()
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let { message ->
+            snackBarHostState
+                .showSnackbar(
+                    message = message,
+                    actionLabel = "Try reconnect",
+                    duration = SnackbarDuration.Indefinite
+                )
+                .let {
+                    if (it == SnackbarResult.ActionPerformed) webSocketService.tryReopenWebSocket()
+                }
+        }
+    }
 
     val actualId by remember {
         derivedStateOf {
             messages.findLast { it.producer == myId }?.id?.inc() ?: 0
-        }
-    }
-
-    DisposableEffect(Unit) {
-        viewModel.openWebSocket()
-
-        onDispose {
-            viewModel.closeWebSocket(reason = "Screen was disposed")
         }
     }
 
@@ -347,7 +458,9 @@ internal fun ChatInterface(
                         Column(
                             modifier = Modifier
                                 .background(
-                                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.8f),
+                                    color = MaterialTheme.colorScheme.secondaryContainer.copy(
+                                        alpha = 0.8f
+                                    ),
                                     shape = RoundedCornerShape(size = 8.dp)
                                 )
                                 .padding(all = 8.dp),
@@ -360,7 +473,12 @@ internal fun ChatInterface(
                                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                                 style = MaterialTheme.typography.bodyMedium
                             )
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(
+                                    8.dp,
+                                    Alignment.End
+                                )
+                            ) {
                                 Text(
                                     text = Instant
                                         .fromEpochMilliseconds(item.time)
@@ -381,7 +499,9 @@ internal fun ChatInterface(
                         Column(
                             modifier = Modifier
                                 .background(
-                                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.8f),
+                                    color = MaterialTheme.colorScheme.secondaryContainer.copy(
+                                        alpha = 0.8f
+                                    ),
                                     shape = RoundedCornerShape(size = 8.dp)
                                 )
                                 .padding(all = 8.dp),
@@ -429,16 +549,17 @@ internal fun ChatInterface(
                 message = currentMessage
             )
 //                .also(messages::add)
-                .also(viewModel::sendMessage)
+                .also(webSocketService::sendMessage)
             currentMessage = ""
         }
 
-        TextField(
+        OutlinedTextField(
             value = currentMessage,
             onValueChange = { currentMessage = it },
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight(),
+            enabled = errorMessage == null,
             textStyle = MaterialTheme.typography.titleMedium,
             placeholder = {
                 Text(
@@ -448,7 +569,7 @@ internal fun ChatInterface(
                 )
             },
             trailingIcon = {
-                IconButton(onClick = onSend) {
+                IconButton(onClick = onSend, enabled = errorMessage == null) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Send,
                         contentDescription = "Send button icon"
@@ -464,16 +585,13 @@ internal fun ChatInterface(
             keyboardActions = KeyboardActions(onSend = { onSend() }),
             singleLine = true,
             colors = MaterialTheme.colorScheme.run {
-                TextFieldDefaults.colors(
+                OutlinedTextFieldDefaults.colors(
                     focusedTextColor = onPrimaryContainer,
                     unfocusedTextColor = onPrimaryContainer,
                     disabledTextColor = onPrimaryContainer.copy(alpha = 0.75f),
-                    focusedContainerColor = primaryContainer,
-                    unfocusedContainerColor = primaryContainer,
-                    disabledContainerColor = primaryContainer.copy(alpha = 0.75f),
-                    focusedIndicatorColor = onPrimary,
-                    unfocusedIndicatorColor = onPrimary,
-                    disabledIndicatorColor = onPrimary.copy(alpha = 0.75f),
+                    focusedBorderColor = primaryContainer,
+                    unfocusedBorderColor = primaryContainer,
+                    disabledBorderColor = primaryContainer.copy(alpha = 0.75f),
                     focusedTrailingIconColor = primary,
                     unfocusedTrailingIconColor = primary,
                     disabledTrailingIconColor = primary.copy(alpha = 0.75f),
@@ -482,12 +600,69 @@ internal fun ChatInterface(
             }
         )
     }
+
+    /*errorMessage?.let { currentMessage ->
+        val connecting = currentMessage == "Connecting..."
+        Popup(
+            alignment = Alignment.BottomCenter,
+//            offset = IntOffset(x = 0, y = localDensity.run { 8.dp.roundToPx() }),
+            properties = PopupProperties(
+                dismissOnBackPress = false,
+                dismissOnClickOutside = false
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(bottom = 16.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.run { if (connecting) primaryContainer else errorContainer },
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                    .padding(all = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = currentMessage,
+                    color = MaterialTheme.colorScheme.run { if (connecting) onPrimaryContainer else onErrorContainer },
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                if (!connecting) TextButton(
+                    onClick = webSocketService::tryReopenWebSocket,
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text(
+                        text = "Try reconnect",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
+    }*/
 }
 
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun AuthInterfacePreview() {
     KotlinTestsTheme {
-        Greeting("Android")
+        var id by rememberSaveable { mutableLongStateOf(value = -1L) }
+        AuthInterface(modifier = Modifier.fillMaxSize()) { id = it }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ChatInterfacePreview() {
+    KotlinTestsTheme {
+        ChatInterface(
+            myId = 13L,
+            webSocketService = WebSocketService(),
+            snackBarHostState = SnackbarHostState(),
+            Modifier.fillMaxSize(),
+        )
     }
 }

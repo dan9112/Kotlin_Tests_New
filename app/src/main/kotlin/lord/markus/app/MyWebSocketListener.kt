@@ -9,7 +9,8 @@ import okio.ByteString
 internal class MyWebSocketListener(
     val onOpen: () -> Unit = {},
     val onMessage: (String) -> Unit,
-    val onClosing: (Int, String) -> Unit = { _, _ -> },
+    val onClosing: (code: Int, reason: String) -> Unit = { _, _ -> },
+    val onClosed: (code: Int, reason: String) -> Unit = { _, _ -> },
     val onFailure: (Throwable) -> Unit = { }
 ) : WebSocketListener() {
     override fun onOpen(webSocket: WebSocket, response: Response) {
@@ -31,8 +32,14 @@ internal class MyWebSocketListener(
         onClosing(code, reason)
     }
 
+    override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+        Log.e(TAG, "Closed : $code / $reason")
+        super.onClosed(webSocket, code, reason)
+    }
+
     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-        Log.d(TAG, "Error : " + t.message)
+        t.printStackTrace()
+        Log.e(TAG, "Error : ${t.message}\t${response} - $t")
         onFailure(t)
     }
 

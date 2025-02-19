@@ -39,6 +39,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     packaging {
         resources {
@@ -72,8 +73,6 @@ dependencies {
     implementation(dependencyNotation = libs.kotlinx.datetime)
 
     implementation(dependencyNotation = libs.okhttp)
-
-    implementation(dependencyNotation = libs.androidx.lifecycle.viewmodel.compose)
 
     implementation(dependencyNotation = libs.kotlinx.serialization.json)
 }
